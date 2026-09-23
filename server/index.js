@@ -97,17 +97,17 @@ const fresh = (sym) => { const t = TAPE[sym]; return !!t && (Date.now() - t.ts) 
 // ---------- brains ----------
 //   each brain looks at the tape and returns a target book: { sym: weight (-1..1 of treasury) }. The agent moves toward it.
 const BRAINS = {
-  MOMENTUM: { name: 'Momentum', line: 'Buys what is already moving. Rides winners, cuts losers.', color: '#9d7bff',
+  MOMENTUM: { name: 'Momentum', line: 'Buys what is already moving. Rides winners, cuts losers.', color: '#00c805',
     think: (T) => { const r = rank(T, (t) => t.d5); const top = r.slice(0, 3), bot = r.slice(-2); const book = {}; top.forEach(([s], i) => book[s] = AGENT_MAX_POS * (1 - i * .25)); bot.forEach(([s]) => book[s] = -AGENT_MAX_POS * .5); return [book, `5-day leaders ${top.map(([s, t]) => s + ' ' + pct(t.d5)).join(', ')}. Long the leaders, short the tail ${bot.map(([s]) => s).join('/')}.`]; } },
-  REVERSION: { name: 'Mean reversion', line: 'Buys what just fell, sells what just spiked. Bets on the rubber band.', color: '#7df9e1',
+  REVERSION: { name: 'Mean reversion', line: 'Buys what just fell, sells what just spiked. Bets on the rubber band.', color: '#7dff8a',
     think: (T) => { const r = rank(T, (t) => -t.d1); const top = r.slice(0, 3); const book = {}; top.forEach(([s], i) => book[s] = AGENT_MAX_POS * (1 - i * .3)); const hot = rank(T, (t) => t.d1)[0]; if (hot) book[hot[0]] = -AGENT_MAX_POS * .4; return [book, `Biggest 24h dips ${top.map(([s, t]) => s + ' ' + pct(t.d1)).join(', ')}. Buying the dip, fading ${hot ? hot[0] + ' ' + pct(hot[1].d1) : 'nothing'}.`]; } },
-  TREND: { name: 'Trend', line: 'Only holds names above their 30-day trend. Patient. Rarely trades.', color: '#b8ff9a',
+  TREND: { name: 'Trend', line: 'Only holds names above their 30-day trend. Patient. Rarely trades.', color: '#c9ffb0',
     think: (T) => { const up = rank(T, (t) => t.d30).filter(([, t]) => t.d30 > 0.02).slice(0, 4); const book = {}; up.forEach(([s]) => book[s] = AGENT_MAX_POS * .8 / Math.max(1, up.length) * 2); return [book, up.length ? `In a 30-day uptrend: ${up.map(([s, t]) => s + ' ' + pct(t.d30)).join(', ')}. Holding the trend, nothing else.` : 'Nothing is trending up on a 30-day view. Sitting in cash.']; } },
   DEGEN: { name: 'Degen', line: 'Crypto only. Max size. Flips direction on every 24h move.', color: '#ffb36b',
     think: (T) => { const cs = ['BTC', 'ETH', 'SOL'].filter((s) => T[s]); const book = {}; cs.forEach((s) => book[s] = Math.sign(T[s].d1 || 1) * AGENT_MAX_POS); return [book, cs.map((s) => (T[s].d1 >= 0 ? 'long ' : 'short ') + s + ' ' + pct(T[s].d1)).join(', ') + '. Size: all of it.']; } },
   HEDGE: { name: 'Hedge', line: 'Long the strongest, short the weakest, dollar-neutral. Sleeps well.', color: '#ffe27b',
     think: (T) => { const r = rank(T, (t) => t.d5); const L = r.slice(0, 2), S = r.slice(-2); const book = {}; L.forEach(([s]) => book[s] = AGENT_MAX_POS * .5); S.forEach(([s]) => book[s] = -AGENT_MAX_POS * .5); return [book, `Pair book: long ${L.map(([s]) => s).join('+')}, short ${S.map(([s]) => s).join('+')}. Net exposure zero.`]; } },
-  VOLHUNT: { name: 'Vol hunter', line: 'Goes where the volatility is. Small size, many names.', color: '#ff7bd5',
+  VOLHUNT: { name: 'Vol hunter', line: 'Goes where the volatility is. Small size, many names.', color: '#5ad8ff',
     think: (T) => { const r = rank(T, (t) => t.vol).slice(0, 5); const book = {}; r.forEach(([s, t]) => book[s] = Math.sign(t.d1 || 1) * AGENT_MAX_POS * .4); return [book, `Loudest tape: ${r.map(([s, t]) => s + ' ' + (t.vol * 100).toFixed(0) + '% vol').join(', ')}. Small bets in the direction of the day.`]; } },
 };
 const pct = (x) => (x >= 0 ? '+' : '') + (x * 100).toFixed(1) + '%';
