@@ -13,18 +13,13 @@ const DESKTOP = require('path').join(__dirname, '..', 'brand'); require('fs').mk
 const CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
 
 const SIZES = {
-  'hush-pfp': [2000, 2000],
-  'hush-banner': [3000, 1000],
-  'hush-keyart': [2400, 1350],
-  'hush-howitworks': [2400, 1350],
-  'hush-features': [2400, 1350],
-  'hush-ledger': [2400, 1350],
-  'hush-vs': [2400, 1350],
-  'hush-erase': [2400, 1350],
-  'hush-drop': [2400, 1350],
-  'hush-blinddesk': [2400, 1350],
-  'hongfun-keyart': [2400, 1350],
-  'wage-howitworks': [2400, 1350],
+  'cerebro-pfp': [2000, 2000],
+  'cerebro-banner': [3000, 1000],
+  'cerebro-keyart': [2400, 1350],
+  'cerebro-howitworks': [2400, 1350],
+  'cerebro-brains': [2400, 1350],
+  'cerebro-ward': [2400, 1350],
+  'cerebro-flywheel': [2400, 1350],
 };
 
 const only = process.argv[2];
@@ -36,7 +31,7 @@ for (const name of names) {
   const [w, h] = SIZES[name];
   const fileUrl = 'file:///' + htmlPath.replace(/\\/g, '/');
   const png = path.join(DESKTOP, name + '.png');
-  const udd = path.join(os.tmpdir(), 'hushchrome_' + name + '_' + Date.now());
+  const udd = path.join(os.tmpdir(), 'cerebrochrome_' + name + '_' + Date.now());
   const r = spawnSync(CHROME, [
     '--headless=new', '--no-sandbox', '--hide-scrollbars',
     '--force-device-scale-factor=1', '--default-background-color=00000000',
