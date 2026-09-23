@@ -1,0 +1,1 @@
+{ "name": "cerebro", "version": "1.0.0", "description": "CEREBRO — launchpad for memecoins with a brain, on Robinhood Chain.", "main": "server/index.js", "scripts": { "start": "node server/index.js" }, "engines": { "node": ">=18" }, "license": "MIT" }
