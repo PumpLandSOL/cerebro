@@ -31,7 +31,7 @@ const num = (v, max) => { const x = Math.floor((+v || 0) * 1e9) / 1e9; return x 
 
 // ---------- state (all balances in ETH) ----------
 let db = { v: 2, wallets: {}, coins: {}, txs: {}, treasuryIn: { eth: 0, n: 0 }, queue: [], protocol: { feesEth: 0, launches: 0, volume: 0, buybackEth: 0 }, feed: [] };
-try { db = Object.assign(db, JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'))); } catch (e) {}
+try { const old = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8')); if (old.v === 2) db = Object.assign(db, old); else console.log('ledger v' + old.v + ' predates the ETH ledger; starting fresh'); } catch (e) {}
 let saveT = null; function save() { if (saveT) return; saveT = setTimeout(() => { saveT = null; try { fs.writeFileSync(DATA_PATH, JSON.stringify(db)); } catch (e) {} }, 800); }
 function W(a) { a = a.toLowerCase(); return db.wallets[a] || (db.wallets[a] = { eth: 0, coins: {}, deposited: 0, hist: [] }); }
 const hist = (w, e) => { w.hist.unshift({ ts: Date.now(), ...e }); if (w.hist.length > 100) w.hist.pop(); };
