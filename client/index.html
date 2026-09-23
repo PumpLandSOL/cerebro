@@ -154,7 +154,7 @@ footer{margin-top:50px;border-top:1px solid var(--edge);padding-top:16px;font-si
       <div>
         <div class="lab">Launchpad · Robinhood Chain</div>
         <h1 style="margin-top:8px">Memecoins<br>with a <em>brain.</em></h1>
-        <p class="lead">Launch a coin and it gets a <b>treasury</b>, a <b>brain</b> and a <b>trading desk</b>. The agent trades tokenized stocks and crypto on the live tape, earns fees on every trade of its coin, and <b>buys the coin back with its profits</b>. Coins that earn, trade and fund themselves.</p>
+        <p class="lead">Launch a coin and it gets a <b>treasury</b>, a <b>brain</b> and a <b>trading desk</b>. The agent trades tokenized stocks and crypto on the live tape, earns fees on every trade of its coin, and <b>buys the coin back with its profits</b>. Seeded and settled in ETH. Coins that earn, trade and fund themselves.</p>
         <div class="cta"><button class="btn fill" data-go="launch">Launch a brain</button><button class="btn" data-go="how">How it works</button></div>
       </div>
       <div class="monitor"><div class="top"><span>WARD · LIVE EQUITY · ALL AGENTS</span><span id="mon-n">—</span></div><canvas id="mon"></canvas><div class="bot" id="mon-legend"></div></div>
@@ -196,9 +196,9 @@ footer{margin-top:50px;border-top:1px solid var(--edge);padding-top:16px;font-si
       <div>
         <div class="panel">
           <div class="seg"><button class="on" id="t-buy">Buy</button><button id="t-sell">Sell</button></div>
-          <div class="field"><input id="c-in" type="number" placeholder="0.00" min="0"><span class="u" id="c-unit">USDG</span><span class="mx" id="c-mx">MAX</span></div>
+          <div class="field"><input id="c-in" type="number" placeholder="0.00" min="0"><span class="u" id="c-unit">ETH</span><span class="mx" id="c-mx">MAX</span></div>
           <div class="row"><span>price</span><b id="c-px">—</b></div><div class="row"><span>market cap</span><b id="c-mc">—</b></div><div class="row"><span>you receive</span><b id="c-out">—</b></div><div class="row"><span>fee 1%</span><b>½ to the agent · ½ to protocol</b></div>
-          <div class="row"><span>your USDG</span><b id="c-usdg">—</b></div><div class="row"><span>you hold</span><b id="c-hold">—</b></div>
+          <div class="row"><span>your ETH</span><b id="c-usdg">—</b></div><div class="row"><span>you hold</span><b id="c-hold">—</b></div>
           <button class="btn fill wide" id="c-act" style="margin-top:12px">Buy</button>
         </div>
         <div class="panel" style="margin-top:16px"><h3>The agent</h3>
@@ -213,16 +213,16 @@ footer{margin-top:50px;border-top:1px solid var(--edge);padding-top:16px;font-si
   <section class="view" data-view="launch">
     <div class="launch">
       <div class="lab">New patient</div><h2 style="font-size:34px;letter-spacing:-.02em;margin:6px 0 6px">Launch a coin with a brain.</h2>
-      <p style="color:var(--dim);margin-bottom:14px">Seed USDG becomes the agent's treasury (5% to the protocol). The coin starts on a bonding curve. Every buy or sell pays 1%: half to the agent, half to the protocol. The agent trades the live tape and buys the coin back with realised profits.</p>
+      <p style="color:var(--dim);margin-bottom:14px">Seed ETH becomes the agent's treasury (5% to the protocol). The coin starts on a bonding curve. Every buy or sell pays 1%: half to the agent, half to the protocol. The agent trades the live tape and buys the coin back with realised profits.</p>
       <div class="panel">
         <div class="field"><input id="l-name" placeholder="name (e.g. Dr. Gains)" maxlength="32"></div>
         <div class="field"><input id="l-tk" placeholder="ticker (e.g. GAINS)" maxlength="8" style="text-transform:uppercase"></div>
         <div class="lab" style="margin-top:12px">Pick a brain</div>
         <div class="brains" id="brains"></div>
-        <div class="field"><input id="l-seed" type="number" placeholder="seed USDG (min 20)" min="20"><span class="u">USDG</span><span class="mx" id="l-mx">MAX</span></div>
-        <div class="row"><span>your USDG</span><b id="l-usdg">—</b></div><div class="row"><span>agent treasury</span><b id="l-tre">—</b></div>
+        <div class="field"><input id="l-seed" type="number" placeholder="seed ETH (min 0.01)" min="0.01" step="0.001"><span class="u">ETH</span><span class="mx" id="l-mx">MAX</span></div>
+        <div class="row"><span>your ETH</span><b id="l-usdg">—</b></div><div class="row"><span>agent treasury</span><b id="l-tre">—</b></div>
         <button class="btn fill wide" id="l-go" style="margin-top:12px">Launch</button>
-        <p style="font-size:12.5px;color:var(--dim);margin-top:10px">No USDG yet? <a href="#" data-go="desk">Deposit on your desk →</a></p>
+        <p style="font-size:12.5px;color:var(--dim);margin-top:10px">No ETH on your desk? <a href="#" data-go="desk">Deposit →</a></p>
       </div>
     </div>
   </section>
@@ -232,16 +232,16 @@ footer{margin-top:50px;border-top:1px solid var(--edge);padding-top:16px;font-si
     <div class="sec"><h2>My desk</h2><span class="r mono" id="d-w">—</span></div>
     <div class="coinwrap">
       <div>
-        <div class="panel"><h3>Deposit USDG</h3><p style="font-size:13.5px;color:var(--dim)">Send USDG on Robinhood Chain to the treasury. It is credited to your desk once the receipt confirms. Minimum <b id="d-min">20</b> USDG.</p>
-          <div class="field"><input id="d-in" type="number" placeholder="amount" min="20"><span class="u">USDG</span></div>
+        <div class="panel"><h3>Deposit ETH</h3><p style="font-size:13.5px;color:var(--dim)">Send ETH on Robinhood Chain to the treasury. It is credited to your desk once the receipt confirms. Minimum <b id="d-min">0.005</b> ETH.</p>
+          <div class="field"><input id="d-in" type="number" placeholder="amount" min="0.005" step="0.001"><span class="u">ETH</span></div>
           <div class="row"><span>treasury</span><b id="d-tre">—</b></div><div class="row"><span>credited so far</span><b id="d-dep">—</b></div>
-          <button class="btn fill wide" id="d-send" style="margin-top:10px">Send USDG from wallet</button>
+          <button class="btn fill wide" id="d-send" style="margin-top:10px">Send ETH from wallet</button>
           <p style="font-size:12.5px;color:var(--dim);margin:12px 0 4px">Already sent? Paste the transaction hash:</p>
           <div class="field"><input id="d-tx" placeholder="0x… transaction hash" spellcheck="false"></div><button class="btn wide" id="d-credit">Credit my deposit</button></div>
-        <div class="panel" style="margin-top:16px"><h3>Withdraw USDG</h3><div class="field"><input id="d-wd" type="number" placeholder="amount" min="1"><span class="u">USDG</span></div><button class="btn wide" id="d-wdgo">Queue withdrawal</button><p style="font-size:12.5px;color:var(--dim);margin-top:8px">Paid by hand from a cold wallet, usually within 24 hours. No hot key on the server.</p><div id="d-queue" style="margin-top:8px"></div></div>
+        <div class="panel" style="margin-top:16px"><h3>Withdraw ETH</h3><div class="field"><input id="d-wd" type="number" placeholder="amount" min="0.001" step="0.001"><span class="u">ETH</span></div><button class="btn wide" id="d-wdgo">Queue withdrawal</button><p style="font-size:12.5px;color:var(--dim);margin-top:8px">Paid by hand from a cold wallet, usually within 24 hours. No hot key on the server.</p><div id="d-queue" style="margin-top:8px"></div></div>
       </div>
       <div>
-        <div class="panel"><div class="strip" style="margin:0;grid-template-columns:1fr 1fr"><div class="st"><div class="l">USDG</div><div class="n" id="d-usdg">—</div></div><div class="st"><div class="l">coins held</div><div class="n" id="d-val">—</div></div></div>
+        <div class="panel"><div class="strip" style="margin:0;grid-template-columns:1fr 1fr"><div class="st"><div class="l">ETH</div><div class="n" id="d-usdg">—</div></div><div class="st"><div class="l">coins held</div><div class="n" id="d-val">—</div></div></div>
           <h3 style="margin-top:14px">Holdings</h3><div id="d-coins"></div><h3 style="margin-top:14px">Your launches</h3><div id="d-launch"></div><h3 style="margin-top:14px">History</h3><div class="log" id="d-hist"></div></div>
       </div>
     </div>
@@ -251,24 +251,24 @@ footer{margin-top:50px;border-top:1px solid var(--edge);padding-top:16px;font-si
   <section class="view" data-view="how">
     <div class="lab">Protocol</div><h2 style="font-size:34px;letter-spacing:-.02em;margin:6px 0 4px">How a coin gets a brain.</h2>
     <div class="how">
-      <div class="step"><i>01 · LAUNCH</i><h3>Seed the treasury</h3><p>Pick a name, a ticker and a brain. Your USDG seed becomes the agent's trading capital (5% to the protocol). The coin lists on a bonding curve at a fixed starting price.</p></div>
+      <div class="step"><i>01 · LAUNCH</i><h3>Seed the treasury</h3><p>Pick a name, a ticker and a brain. Your ETH seed becomes the agent's trading capital (5% to the protocol). The coin lists on a bonding curve at a fixed starting price.</p></div>
       <div class="step"><i>02 · EARN</i><h3>Fees feed the agent</h3><p>Every buy and sell of the coin pays 1%. Half lands in the agent's treasury as cash, half goes to the protocol. The more the coin trades, the more capital the brain has to work with.</p></div>
       <div class="step"><i>03 · TRADE</i><h3>The brain works the tape</h3><p>Every few seconds the agent reads live prices for HOOD, TSLA, NVDA, AAPL, SPY, COIN, MSTR, GLD, BTC, ETH and SOL, and moves its book toward what its brain wants. Positions take profit at +12% and stop at −8%. It never puts more than 35% in one name.</p></div>
       <div class="step"><i>04 · FUND ITSELF</i><h3>Profit buys the coin back</h3><p>When the agent's cash rises above its high-water mark, half of the gain buys the coin on the curve. Bought-back coins sit in the agent's treasury. Trading skill becomes buy pressure.</p></div>
       <div class="step"><i>05 · SIX BRAINS</i><h3>Momentum · Reversion · Trend · Degen · Hedge · Vol hunter</h3><p>Each brain is a deterministic strategy over the tape. Its reasoning is printed on the coin page every time it acts, so you can read exactly why it did what it did.</p></div>
-      <div class="step"><i>06 · REAL USDG</i><h3>Deposits verified on-chain</h3><p>Every USDG on the ward arrived as a real transfer on Robinhood Chain that the server verified against the receipt. Withdrawals are paid from a cold wallet. There is no hot key on the server.</p></div>
+      <div class="step"><i>06 · REAL ETH</i><h3>Deposits verified on-chain</h3><p>Every ETH on the ward arrived as a real transfer on Robinhood Chain that the server verified against the receipt. Withdrawals are paid from a cold wallet. There is no hot key on the server.</p></div>
     </div>
     <div class="sec" style="margin-top:34px"><h2>Answers</h2></div>
     <div class="faq">
-      <details open><summary>What actually is the agent?</summary><div class="a">A treasury of USDG plus a strategy. At launch it holds your seed. Every tick it reads the live tape, decides a target book according to its brain, and opens or closes positions to match. Positions are marked against live prices; realised P&amp;L moves its cash. It is fully deterministic, every decision is logged with the reasoning, and it runs whether or not anyone is watching.</div></details>
+      <details open><summary>What actually is the agent?</summary><div class="a">A treasury of ETH plus a strategy. At launch it holds your seed. Every tick it reads the live tape, decides a target book according to its brain, and opens or closes positions to match. Positions are marked against live prices; realised P&amp;L moves its cash. It is fully deterministic, every decision is logged with the reasoning, and it runs whether or not anyone is watching.</div></details>
       <details><summary>How does the coin fund itself?</summary><div class="a">Two ways. <b>Fees:</b> half of the 1% on every coin trade is paid into the agent's treasury. <b>Buybacks:</b> whenever the agent's cash exceeds its previous high-water mark, half of the new profit buys the coin on the bonding curve. The bought coins stay in the treasury. The coin's price only moves on the curve, so every buyback is real buy pressure.</div></details>
-      <details><summary>What is the bonding curve?</summary><div class="a">A constant-product curve on virtual reserves, one billion coins against a virtual USDG reserve. Buying moves the price up along the curve, selling moves it down, and there is no order book and no counterparty. The curve is the only market for the coin.</div></details>
+      <details><summary>What is the bonding curve?</summary><div class="a">A constant-product curve on virtual reserves, one billion coins against a virtual ETH reserve. Buying moves the price up along the curve, selling moves it down, and there is no order book and no counterparty. The curve is the only market for the coin.</div></details>
       <details><summary>Can the agent lose money?</summary><div class="a">Yes. It trades real prices with real stops. A losing streak shrinks its treasury, and a treasury below its high-water mark makes no buybacks until it recovers. That is the game: pick a brain you believe in, or launch your own and let the ward rank it.</div></details>
       <details><summary>What can I see about an agent?</summary><div class="a">Everything. Equity over time, open positions with live P&amp;L, every open, close and buyback with a timestamp, the reasoning behind each decision, win rate, fees earned and coins bought back. The ward ranks all agents by equity growth since seed.</div></details>
-      <details><summary>Is my USDG actually deposited?</summary><div class="a">Yes. A deposit is a real <b>USDG transfer on Robinhood Chain to the treasury</b>. The server reads the receipt, checks the Transfer log runs from your wallet to the treasury, and only then credits your desk.</div></details>
-      <details><summary>How do I get USDG out?</summary><div class="a">Sell coins for USDG on the curve, then <b>Withdraw</b>. Withdrawals enter a queue the treasury pays from a cold wallet, usually within 24 hours, with the payout hash written next to your request.</div></details>
+      <details><summary>Is my ETH actually deposited?</summary><div class="a">Yes. A deposit is a real <b>ETH transfer on Robinhood Chain to the treasury</b>. The server reads the transaction, checks it was sent from your wallet to the treasury address and confirmed, and only then credits your desk.</div></details>
+      <details><summary>How do I get ETH out?</summary><div class="a">Sell coins for ETH on the curve, then <b>Withdraw</b>. Withdrawals enter a queue the treasury pays from a cold wallet, usually within 24 hours, with the payout hash written next to your request.</div></details>
       <details><summary>What is $CEREBRO for?</summary><div class="a">The protocol's share token. The protocol's half of every trade fee and 5% of every seed accrue to it. Holders govern brain parameters, fee splits and which markets are on the tape.</div></details>
-      <details><summary>Which chain and wallet?</summary><div class="a"><b>Robinhood Chain</b> (chainId 4663). Connect any EVM wallet such as MetaMask or Rabby; the site switches the network for you. USDG is the only asset that moves.</div></details>
+      <details><summary>Which chain and wallet?</summary><div class="a"><b>Robinhood Chain</b> (chainId 4663). Connect any EVM wallet such as MetaMask or Rabby; the site switches the network for you. ETH, the native gas token, is the only asset that moves.</div></details>
     </div>
   </section>
 

@@ -35,7 +35,7 @@ cerebropad.xyz
 ```
 How a coin gets a brain:
 
-01 Launch: seed USDG becomes the agent treasury
+01 Launch: seed ETH becomes the agent treasury
 02 Earn: half of every 1% trade fee goes to the agent
 03 Trade: the brain works the live tape every 5s
 04 Fund itself: new highs buy the coin back

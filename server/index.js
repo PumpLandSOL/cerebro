@@ -2,7 +2,7 @@
 //   Every coin launched here comes with an AGENT: a treasury seeded at launch and fed by its own trading fees,
 //   a BRAIN (strategy) that trades tokenized stocks and crypto on the live exchange tape, and a rule: profits buy
 //   back the coin. The coin earns, trades and funds itself. Dependency-free Node.
-//   Ledger + curves run off-chain; deposits are real USDG transfers to TREASURY, verified against the chain.
+//   Ledger + curves run off-chain in ETH; deposits are real ETH transfers to TREASURY on Robinhood Chain, verified against the receipt.
 'use strict';
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { createHash, randomBytes, randomInt } = require('crypto');
@@ -11,15 +11,15 @@ const PORT = process.env.PORT || 8224;
 const ROOT = path.join(__dirname, '..');
 const DATA_PATH = process.env.DATA_PATH || path.join(ROOT, 'data.json');
 const CEREBRO_MINT = process.env.CEREBRO_MINT || '';   // $CEREBRO on Robinhood Chain — set at launch
-const TREASURY = (process.env.TREASURY || '0x580Aa9df627A396F32aE649EC427a4Cb430a5eD2');   // every USDG deposit is verified against this address
+const TREASURY = (process.env.TREASURY || '0x580Aa9df627A396F32aE649EC427a4Cb430a5eD2');   // every ETH deposit is verified against this address
 const ADMIN_KEY = process.env.ADMIN_KEY || '';
 const TICK_SEC = +(process.env.TICK_SEC || 5);           // agent decision cadence
-const LAUNCH_MIN = +(process.env.LAUNCH_MIN || 20);      // USDG: minimum seed for a new agent
+const LAUNCH_MIN = +(process.env.LAUNCH_MIN || 0.01);    // ETH: minimum seed for a new agent
 const LAUNCH_FEE = +(process.env.LAUNCH_FEE || 0.05);    // share of the seed that goes to the protocol
 const TRADE_FEE = +(process.env.TRADE_FEE || 0.01);      // 1% on every coin buy/sell: half to the coin's agent treasury, half to the protocol
 const AGENT_MAX_POS = +(process.env.AGENT_MAX_POS || 0.35); // an agent never puts more than this share of its treasury in one position
 const BUYBACK_SHARE = +(process.env.BUYBACK_SHARE || 0.5); // share of realised profit above high-water mark that buys the coin back
-const CURVE_V = +(process.env.CURVE_V || 30);            // virtual USDG reserve at launch (sets the starting price)
+const CURVE_V = +(process.env.CURVE_V || 0.01);          // virtual ETH reserve at launch (sets the starting price)
 const CURVE_SUPPLY = 1_000_000_000;                      // coin supply on the curve
 
 const sha = (s) => createHash('sha256').update(s).digest();
@@ -27,22 +27,20 @@ const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 function base58(buf) { let n = BigInt('0x' + Buffer.from(buf).toString('hex') || '0'), s = ''; while (n > 0n) { s = B58[Number(n % 58n)] + s; n /= 58n; } return s || '1'; }
 const id8 = () => base58(randomBytes(6));
 const isWallet = (s) => /^0x[a-fA-F0-9]{40}$/.test(s);
-const num = (v, max) => { const x = Math.floor((+v || 0) * 1e6) / 1e6; return x > 0 ? Math.min(x, max == null ? x : max) : 0; };
+const num = (v, max) => { const x = Math.floor((+v || 0) * 1e9) / 1e9; return x > 0 ? Math.min(x, max == null ? x : max) : 0; };
 
-// ---------- state ----------
-let db = { v: 1, wallets: {}, coins: {}, txs: {}, treasuryIn: { usdg: 0, n: 0 }, queue: [], protocol: { feesUsd: 0, launches: 0, volume: 0, buybackUsd: 0 }, feed: [] };
+// ---------- state (all balances in ETH) ----------
+let db = { v: 2, wallets: {}, coins: {}, txs: {}, treasuryIn: { eth: 0, n: 0 }, queue: [], protocol: { feesEth: 0, launches: 0, volume: 0, buybackEth: 0 }, feed: [] };
 try { db = Object.assign(db, JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'))); } catch (e) {}
 let saveT = null; function save() { if (saveT) return; saveT = setTimeout(() => { saveT = null; try { fs.writeFileSync(DATA_PATH, JSON.stringify(db)); } catch (e) {} }, 800); }
-function W(a) { a = a.toLowerCase(); return db.wallets[a] || (db.wallets[a] = { usdg: 0, coins: {}, deposited: 0, hist: [] }); }
+function W(a) { a = a.toLowerCase(); return db.wallets[a] || (db.wallets[a] = { eth: 0, coins: {}, deposited: 0, hist: [] }); }
 const hist = (w, e) => { w.hist.unshift({ ts: Date.now(), ...e }); if (w.hist.length > 100) w.hist.pop(); };
 const feed = (e) => { db.feed.unshift({ ts: Date.now(), ...e }); if (db.feed.length > 80) db.feed.pop(); };
 
-// ---------- chain: real USDG deposits to TREASURY, verified on-chain ----------
-const USDG = { addr: (process.env.USDG_ADDR || '0x5fc5360D0400a0Fd4f2af552ADD042D716F1d168').toLowerCase(), dec: 6 };
+// ---------- chain: real ETH deposits to TREASURY (native value transfers), verified on-chain ----------
 const RPCS = (process.env.RH_RPCS || 'https://rpc.mainnet.chain.robinhood.com').split(',');
-const MIN_DEPOSIT = +(process.env.MIN_DEPOSIT || 20);
-const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
-const CHAIN = { ok: false, block: 0, treasuryUsdg: 0, lastRead: 0 };
+const MIN_DEPOSIT = +(process.env.MIN_DEPOSIT || 0.005);   // ETH — smaller transfers are NOT credited
+const CHAIN = { ok: false, block: 0, treasuryEth: 0, lastRead: 0 };
 const hexToNum = (h, dec) => { if (!h || h === '0x') return 0; const bi = BigInt(h); const d = 10n ** BigInt(dec || 18); return Number(bi / d) + Number(bi % d) / Number(d); };
 async function rpc(method, params) {
   let err; for (const u of RPCS) { try { const ac = new AbortController(); const tm = setTimeout(() => ac.abort(), 8000);
@@ -50,8 +48,7 @@ async function rpc(method, params) {
     const j = await r.json(); if (j.error) throw new Error(j.error.message); return j.result; } catch (e) { err = e; } }
   throw err || new Error('rpc');
 }
-const balOf = (token, dec, who) => rpc('eth_call', [{ to: token, data: '0x70a08231' + who.slice(2).padStart(64, '0') }, 'latest']).then((r) => hexToNum(r, dec));
-async function pollChain() { try { CHAIN.block = Number(BigInt(await rpc('eth_blockNumber', []))); CHAIN.treasuryUsdg = await balOf(USDG.addr, USDG.dec, TREASURY); CHAIN.ok = true; CHAIN.lastRead = Date.now(); } catch (e) { CHAIN.ok = false; } }
+async function pollChain() { try { CHAIN.block = Number(BigInt(await rpc('eth_blockNumber', []))); CHAIN.treasuryEth = hexToNum(await rpc('eth_getBalance', [TREASURY, 'latest']), 18); CHAIN.ok = true; CHAIN.lastRead = Date.now(); } catch (e) { CHAIN.ok = false; } }
 setInterval(pollChain, 30000); pollChain();
 async function creditDeposit(w, txHash) {
   if (!/^0x[a-fA-F0-9]{64}$/.test(txHash || '')) throw 'paste the transaction hash';
@@ -59,15 +56,11 @@ async function creditDeposit(w, txHash) {
   const [tx, rc] = await Promise.all([rpc('eth_getTransactionByHash', [txHash]), rpc('eth_getTransactionReceipt', [txHash])]);
   if (!tx) throw 'tx not found'; if (!rc) throw 'pending — try again in a few seconds'; if (rc.status !== '0x1') throw 'tx reverted';
   if ((tx.from || '').toLowerCase() !== w) throw 'tx not from your wallet';
-  let amt = 0;
-  for (const lg of rc.logs || []) {
-    if ((lg.address || '').toLowerCase() !== USDG.addr || lg.topics[0] !== TRANSFER_TOPIC) continue;
-    const from = '0x' + lg.topics[1].slice(26), to = '0x' + lg.topics[2].slice(26);
-    if (from.toLowerCase() === w && to.toLowerCase() === TREASURY.toLowerCase()) amt += hexToNum(lg.data, USDG.dec);
-  }
-  if (!(amt > 0)) throw 'no USDG transfer to the treasury in this tx';
-  if (amt < MIN_DEPOSIT) throw 'minimum deposit is ' + MIN_DEPOSIT + ' USDG — this transfer (' + amt.toFixed(2) + ') is not credited';
-  const u = W(w); u.usdg += amt; u.deposited += amt; db.txs[txHash] = { w, amt, block: Number(BigInt(rc.blockNumber)), ts: Date.now() }; db.treasuryIn.usdg += amt; db.treasuryIn.n++; hist(u, { type: 'deposit', amt }); save();
+  if ((tx.to || '').toLowerCase() !== TREASURY.toLowerCase()) throw 'tx is not a transfer to the treasury';
+  const amt = hexToNum(tx.value, 18);
+  if (!(amt > 0)) throw 'no ETH sent to the treasury in this tx';
+  if (amt < MIN_DEPOSIT) throw 'minimum deposit is ' + MIN_DEPOSIT + ' ETH — this transfer (' + amt.toFixed(5) + ') is not credited';
+  const u = W(w); u.eth += amt; u.deposited += amt; db.txs[txHash] = { w, amt, block: Number(BigInt(rc.blockNumber)), ts: Date.now() }; db.treasuryIn.eth += amt; db.treasuryIn.n++; hist(u, { type: 'deposit', amt }); save();
   return { amt, tx: txHash };
 }
 
@@ -114,7 +107,7 @@ const pct = (x) => (x >= 0 ? '+' : '') + (x * 100).toFixed(1) + '%';
 function rank(T, f) { return Object.entries(T).filter(([s]) => fresh(s)).sort((a, b) => f(b[1]) - f(a[1])); }
 
 // ---------- coins + agents ----------
-//   bonding curve: constant product on virtual reserves. price = R / S where R = virtual USDG, S = virtual supply.
+//   bonding curve: constant product on virtual reserves. price = R / S where R = virtual ETH, S = virtual supply.
 function coinView(c, full) {
   const price = c.r / c.s; const mcap = price * CURVE_SUPPLY; const eq = agentEquity(c);
   const v = { id: c.id, name: c.name, ticker: c.ticker, brain: c.brain, brainName: BRAINS[c.brain].name, color: BRAINS[c.brain].color, creator: c.creator.slice(0, 6) + '…' + c.creator.slice(-4), ts: c.ts,
@@ -128,7 +121,7 @@ function agentEquity(c) { return c.agent.cash + c.agent.pos.reduce((a, p) => a +
 function curvePrice(c) { return c.r / c.s; }
 function buyOnCurve(c, usd) { const k = c.r * c.s; const r2 = c.r + usd; const out = c.s - k / r2; c.r = r2; c.s -= out; return out; }
 function sellOnCurve(c, coins) { const k = c.r * c.s; const s2 = c.s + coins; const out = c.r - k / s2; c.s = s2; c.r -= out; return out; }
-function fee(c, usd) { const f = usd * TRADE_FEE; c.agent.cash += f / 2; c.agent.feesIn += f / 2; db.protocol.feesUsd += f / 2; return f; }
+function fee(c, eth) { const f = eth * TRADE_FEE; c.agent.cash += f / 2; c.agent.feesIn += f / 2; db.protocol.feesEth += f / 2; return f; }
 
 function agentTick(c, now) {
   const A = c.agent; const T = {}; for (const s of Object.keys(MARKETS)) if (fresh(s)) T[s] = TAPE[s]; if (!Object.keys(T).length) return;
@@ -138,12 +131,12 @@ function agentTick(c, now) {
   for (const p of A.pos.slice()) { const v = posView(p); const want = book[p.sym] || 0; const wrongWay = Math.sign(want) !== (p.side === 'long' ? 1 : -1); const move = v.pnl / p.notional;
     if (wrongWay || move > 0.12 || move < -0.08) { closePos(c, p, v, wrongWay ? 'brain flipped' : move > 0 ? 'took profit' : 'stopped out'); acted = true; } }
   // open toward the target book
-  for (const [sym, wgt] of Object.entries(book)) { if (!wgt || A.pos.some((p) => p.sym === sym)) continue; const notional = Math.min(A.cash * 0.95, Math.abs(wgt) * eq); if (notional < 2) continue;
+  for (const [sym, wgt] of Object.entries(book)) { if (!wgt || A.pos.some((p) => p.sym === sym)) continue; const notional = Math.min(A.cash * 0.95, Math.abs(wgt) * eq); if (notional < 0.0005) continue;
     A.cash -= notional; A.pos.push({ sym, side: wgt > 0 ? 'long' : 'short', notional, entry: TAPE[sym].px, ts: now }); A.trades++; A.log.unshift({ ts: now, kind: 'open', sym, side: wgt > 0 ? 'long' : 'short', notional, px: TAPE[sym].px }); if (A.log.length > 200) A.log.pop(); acted = true; }
   if (acted || !A.thoughts.length || now - A.thoughts[0].ts > 20 * 60e3) { A.thoughts.unshift({ ts: now, text: why, equity: agentEquity(c) }); if (A.thoughts.length > 60) A.thoughts.pop(); }
   // fund itself: realised profit above the high-water mark buys the coin back from the curve
-  const eq2 = agentEquity(c); if (A.cash > A.hwm + 1) { const gain = A.cash - A.hwm; const spend = gain * BUYBACK_SHARE; A.cash -= spend; const got = buyOnCurve(c, spend); A.boughtBack += spend; A.boughtCoins += got; db.protocol.buybackUsd += spend; A.hwm = A.cash; c.volume += spend;
-    A.log.unshift({ ts: now, kind: 'buyback', usd: spend, coins: got, px: curvePrice(c) }); feed({ type: 'buyback', coin: c.ticker, usd: spend }); }
+  const eq2 = agentEquity(c); if (A.cash > A.hwm + 0.0002) { const gain = A.cash - A.hwm; const spend = gain * BUYBACK_SHARE; A.cash -= spend; const got = buyOnCurve(c, spend); A.boughtBack += spend; A.boughtCoins += got; db.protocol.buybackEth += spend; A.hwm = A.cash; c.volume += spend;
+    A.log.unshift({ ts: now, kind: 'buyback', eth: spend, coins: got, px: curvePrice(c) }); feed({ type: 'buyback', coin: c.ticker, eth: spend }); }
   A.curve.push([now, eq2]); if (A.curve.length > 400) A.curve.shift();
 }
 function closePos(c, p, v, why) { const A = c.agent; A.cash += p.notional + v.pnl; A.pos = A.pos.filter((x) => x !== p); A.trades++; if (v.pnl > 0) A.wins++; A.log.unshift({ ts: Date.now(), kind: 'close', sym: p.sym, side: p.side, notional: p.notional, pnl: v.pnl, why }); if (A.log.length > 200) A.log.pop(); }
@@ -153,9 +146,9 @@ setInterval(tick, TICK_SEC * 1000);
 
 // ---------- views ----------
 function account(addr) { const w = W(addr); const coins = Object.entries(w.coins).filter(([, q]) => q > 0).map(([id, qty]) => { const c = db.coins[id]; return c ? { id, ticker: c.ticker, name: c.name, qty, value: qty * curvePrice(c) } : null; }).filter(Boolean);
-  return { wallet: addr.toLowerCase(), usdg: w.usdg, deposited: w.deposited, coins, launched: Object.values(db.coins).filter((c) => c.creator === addr.toLowerCase()).map((c) => c.id), hist: w.hist.slice(0, 40), queue: db.queue.filter((q) => q.wallet === addr.toLowerCase()).slice(0, 10) }; }
+  return { wallet: addr.toLowerCase(), eth: w.eth, deposited: w.deposited, coins, launched: Object.values(db.coins).filter((c) => c.creator === addr.toLowerCase()).map((c) => c.id), hist: w.hist.slice(0, 40), queue: db.queue.filter((q) => q.wallet === addr.toLowerCase()).slice(0, 10) }; }
 function state() { const coins = Object.values(db.coins).map((c) => coinView(c)); const board = coins.slice().sort((a, b) => (b.agent.equity / b.agent.seed) - (a.agent.equity / a.agent.seed));
-  return { gov: 'CEREBRO', mint: CEREBRO_MINT, treasury: TREASURY, chain: { ok: CHAIN.ok, block: CHAIN.block, treasuryUsdg: CHAIN.treasuryUsdg, usdg: USDG.addr }, minDeposit: MIN_DEPOSIT, launchMin: LAUNCH_MIN, tradeFee: TRADE_FEE, brains: Object.entries(BRAINS).map(([k, b]) => ({ id: k, name: b.name, line: b.line, color: b.color })),
+  return { gov: 'CEREBRO', mint: CEREBRO_MINT, treasury: TREASURY, chain: { ok: CHAIN.ok, block: CHAIN.block, treasuryEth: CHAIN.treasuryEth, ethUsd: TAPE.ETH ? TAPE.ETH.px : null }, minDeposit: MIN_DEPOSIT, launchMin: LAUNCH_MIN, tradeFee: TRADE_FEE, brains: Object.entries(BRAINS).map(([k, b]) => ({ id: k, name: b.name, line: b.line, color: b.color })),
     tape: Object.keys(MARKETS).map((s) => ({ sym: s, px: TAPE[s] ? TAPE[s].px : null, d1: TAPE[s] ? TAPE[s].d1 : 0, fresh: fresh(s) })), coins: board, protocol: { ...db.protocol, agents: coins.length, agentsEquity: coins.reduce((a, c) => a + c.agent.equity, 0), deposits: db.treasuryIn }, feed: db.feed.slice(0, 30), t: Date.now() }; }
 
 // ---------- http ----------
@@ -174,24 +167,24 @@ http.createServer(async (req, res) => {
   const addr = d.wallet.toLowerCase(); const w = W(addr);
   if (u === '/api/account') return json(res, 200, account(addr));
   if (u === '/api/deposit') { try { const r = await creditDeposit(addr, d.tx); return json(res, 200, { ok: true, ...r, ...account(addr) }); } catch (e) { return json(res, 200, { error: String(e.message || e) }); } }
-  if (u === '/api/dev/faucet' && process.env.DEV_FAUCET === '1') { w.usdg += num(d.amount) || 0; save(); return json(res, 200, { ok: true, ...account(addr) }); }   // LOCAL TESTING ONLY
+  if (u === '/api/dev/faucet' && process.env.DEV_FAUCET === '1') { w.eth += num(d.amount) || 0; save(); return json(res, 200, { ok: true, ...account(addr) }); }   // LOCAL TESTING ONLY
   if (u === '/api/launch') {
     const name = String(d.name || '').trim().slice(0, 32), ticker = String(d.ticker || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8); const brain = String(d.brain || '').toUpperCase();
     if (name.length < 2) return json(res, 200, { error: 'give it a name' }); if (ticker.length < 2) return json(res, 200, { error: 'give it a ticker' }); if (!BRAINS[brain]) return json(res, 200, { error: 'pick a brain' });
     if (Object.values(db.coins).some((c) => c.ticker === ticker)) return json(res, 200, { error: ticker + ' is taken' });
-    const seed = num(d.seed, w.usdg); if (seed < LAUNCH_MIN) return json(res, 200, { error: 'minimum seed is ' + LAUNCH_MIN + ' USDG' + (w.usdg < LAUNCH_MIN ? ' — deposit first' : '') });
-    w.usdg -= seed; const proto = seed * LAUNCH_FEE; db.protocol.feesUsd += proto; const cash = seed - proto;
+    const seed = num(d.seed, w.eth); if (seed < LAUNCH_MIN) return json(res, 200, { error: 'minimum seed is ' + LAUNCH_MIN + ' ETH' + (w.eth < LAUNCH_MIN ? ' — deposit first' : '') });
+    w.eth -= seed; const proto = seed * LAUNCH_FEE; db.protocol.feesEth += proto; const cash = seed - proto;
     const c = { id: id8(), name, ticker, brain, creator: addr, ts: Date.now(), r0: CURVE_V, r: CURVE_V, s: CURVE_SUPPLY, volume: 0, trades: [], agent: { seed: cash, cash, hwm: cash, pos: [], trades: 0, wins: 0, feesIn: 0, boughtBack: 0, boughtCoins: 0, thoughts: [], log: [], curve: [[Date.now(), cash]] } };
-    db.coins[c.id] = c; db.protocol.launches++; hist(w, { type: 'launch', amt: seed, coin: ticker }); feed({ type: 'launch', coin: ticker, brain, usd: cash }); agentTick(c, Date.now()); save();
+    db.coins[c.id] = c; db.protocol.launches++; hist(w, { type: 'launch', amt: seed, coin: ticker }); feed({ type: 'launch', coin: ticker, brain, eth: cash }); agentTick(c, Date.now()); save();
     return json(res, 200, { ok: true, coin: coinView(c, true), ...account(addr) });
   }
-  if (u === '/api/buy') { const c = db.coins[d.id]; if (!c) return json(res, 200, { error: 'no such coin' }); const usd = num(d.amount, w.usdg); if (usd < 1) return json(res, 200, { error: 'minimum 1 USDG' });
-    w.usdg -= usd; const f = fee(c, usd); const got = buyOnCurve(c, usd - f); w.coins[c.id] = (w.coins[c.id] || 0) + got; c.volume += usd; db.protocol.volume += usd; c.trades.unshift({ ts: Date.now(), side: 'buy', usd, coins: got, px: curvePrice(c) }); if (c.trades.length > 200) c.trades.pop(); hist(w, { type: 'buy', amt: usd, coin: c.ticker }); save();
+  if (u === '/api/buy') { const c = db.coins[d.id]; if (!c) return json(res, 200, { error: 'no such coin' }); const usd = num(d.amount, w.eth); if (usd < 0.0002) return json(res, 200, { error: 'minimum 0.0002 ETH' });
+    w.eth -= usd; const f = fee(c, usd); const got = buyOnCurve(c, usd - f); w.coins[c.id] = (w.coins[c.id] || 0) + got; c.volume += usd; db.protocol.volume += usd; c.trades.unshift({ ts: Date.now(), side: 'buy', usd, coins: got, px: curvePrice(c) }); if (c.trades.length > 200) c.trades.pop(); hist(w, { type: 'buy', amt: usd, coin: c.ticker }); save();
     return json(res, 200, { ok: true, got, coin: coinView(c), ...account(addr) }); }
   if (u === '/api/sell') { const c = db.coins[d.id]; if (!c) return json(res, 200, { error: 'no such coin' }); const q = num(d.amount, w.coins[c.id] || 0); if (!q) return json(res, 200, { error: 'nothing to sell' });
-    w.coins[c.id] -= q; const gross = sellOnCurve(c, q); const f = fee(c, gross); w.usdg += gross - f; c.volume += gross; db.protocol.volume += gross; c.trades.unshift({ ts: Date.now(), side: 'sell', usd: gross, coins: q, px: curvePrice(c) }); if (c.trades.length > 200) c.trades.pop(); hist(w, { type: 'sell', amt: gross - f, coin: c.ticker }); save();
+    w.coins[c.id] -= q; const gross = sellOnCurve(c, q); const f = fee(c, gross); w.eth += gross - f; c.volume += gross; db.protocol.volume += gross; c.trades.unshift({ ts: Date.now(), side: 'sell', usd: gross, coins: q, px: curvePrice(c) }); if (c.trades.length > 200) c.trades.pop(); hist(w, { type: 'sell', amt: gross - f, coin: c.ticker }); save();
     return json(res, 200, { ok: true, usd: gross - f, coin: coinView(c), ...account(addr) }); }
-  if (u === '/api/withdraw') { const x = num(d.amount, w.usdg); if (x < 1) return json(res, 200, { error: 'minimum 1 USDG' }); w.usdg -= x; const q = { id: id8(), wallet: addr, amt: x, asset: 'USDG', ts: Date.now(), status: 'queued', tx: null }; db.queue.unshift(q); if (db.queue.length > 500) db.queue.pop(); hist(w, { type: 'withdraw', amt: x }); save(); return json(res, 200, { ok: true, queued: q, ...account(addr) }); }
+  if (u === '/api/withdraw') { const x = num(d.amount, w.eth); if (x < 0.001) return json(res, 200, { error: 'minimum 0.001 ETH' }); w.eth -= x; const q = { id: id8(), wallet: addr, amt: x, asset: 'ETH', ts: Date.now(), status: 'queued', tx: null }; db.queue.unshift(q); if (db.queue.length > 500) db.queue.pop(); hist(w, { type: 'withdraw', amt: x }); save(); return json(res, 200, { ok: true, queued: q, ...account(addr) }); }
   if (u === '/api/admin/queue') { if (!ADMIN_KEY || d.key !== ADMIN_KEY) return json(res, 200, { error: 'no' }); return json(res, 200, { ok: true, queue: db.queue.slice(0, 100), deposits: Object.entries(db.txs).map(([tx, t]) => ({ tx, ...t })).slice(-50) }); }
   if (u === '/api/admin/paid') { if (!ADMIN_KEY || d.key !== ADMIN_KEY) return json(res, 200, { error: 'no' }); const q = db.queue.find((x) => x.id === d.id); if (!q) return json(res, 200, { error: 'no such item' }); q.status = 'paid'; q.tx = d.tx || null; q.paidTs = Date.now(); save(); return json(res, 200, { ok: true, q }); }
   json(res, 404, { error: 'unknown route' });
