@@ -1,8 +1,8 @@
-// CEREBRO — launchpad for memecoins with a brain, on Robinhood Chain.
+// CEREBRO — launchpad for memecoins with a brain, on Solana.
 //   Every coin launched here comes with an AGENT: a treasury seeded at launch and fed by its own trading fees,
 //   a BRAIN (strategy) that trades tokenized stocks and crypto on the live exchange tape, and a rule: profits buy
 //   back the coin. The coin earns, trades and funds itself. Dependency-free Node.
-//   Ledger + curves run off-chain in ETH; deposits are real ETH transfers to TREASURY on Robinhood Chain, verified against the receipt.
+//   Ledger + curves run off-chain in SOL; deposits are real SOL transfers to TREASURY on Solana, verified against the confirmed transaction.
 'use strict';
 const http = require('http'); const fs = require('fs'); const path = require('path');
 const { createHash, randomBytes, randomInt } = require('crypto');
@@ -10,64 +10,69 @@ const { createHash, randomBytes, randomInt } = require('crypto');
 const PORT = process.env.PORT || 8224;
 const ROOT = path.join(__dirname, '..');
 const DATA_PATH = process.env.DATA_PATH || path.join(ROOT, 'data.json');
-const CEREBRO_MINT = process.env.CEREBRO_MINT || '';   // $CEREBRO on Robinhood Chain — set at launch
-const TREASURY = (process.env.TREASURY || '0x580Aa9df627A396F32aE649EC427a4Cb430a5eD2');   // every ETH deposit is verified against this address
+const CEREBRO_MINT = process.env.CEREBRO_MINT || '';   // $CEREBRO mint on Solana — set at launch
+const TREASURY = process.env.TREASURY || '';   // Solana pubkey, env only (never committed, never shown); every SOL deposit is verified against it
 const ADMIN_KEY = process.env.ADMIN_KEY || '';
 const TICK_SEC = +(process.env.TICK_SEC || 5);           // agent decision cadence
-const LAUNCH_MIN = +(process.env.LAUNCH_MIN || 0.01);    // ETH: minimum seed for a new agent
+const LAUNCH_MIN = +(process.env.LAUNCH_MIN || 0.2);    // SOL: minimum seed for a new agent
 const LAUNCH_FEE = +(process.env.LAUNCH_FEE || 0.05);    // share of the seed that goes to the protocol
 const TRADE_FEE = +(process.env.TRADE_FEE || 0.01);      // 1% on every coin buy/sell: half to the coin's agent treasury, half to the protocol
 const AGENT_MAX_POS = +(process.env.AGENT_MAX_POS || 0.35); // an agent never puts more than this share of its treasury in one position
 const BUYBACK_SHARE = +(process.env.BUYBACK_SHARE || 0.5); // share of realised profit above high-water mark that buys the coin back
-const CURVE_V = +(process.env.CURVE_V || 0.01);          // virtual ETH reserve at launch (sets the starting price)
+const CURVE_V = +(process.env.CURVE_V || 0.2);           // virtual SOL reserve at launch (sets the starting price)
 const CURVE_SUPPLY = 1_000_000_000;                      // coin supply on the curve
 
 const sha = (s) => createHash('sha256').update(s).digest();
 const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 function base58(buf) { let n = BigInt('0x' + Buffer.from(buf).toString('hex') || '0'), s = ''; while (n > 0n) { s = B58[Number(n % 58n)] + s; n /= 58n; } return s || '1'; }
 const id8 = () => base58(randomBytes(6));
-const isWallet = (s) => /^0x[a-fA-F0-9]{40}$/.test(s);
+const isWallet = (s) => /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s);
 const num = (v, max) => { const x = Math.floor((+v || 0) * 1e9) / 1e9; return x > 0 ? Math.min(x, max == null ? x : max) : 0; };
 
-// ---------- state (all balances in ETH) ----------
-let db = { v: 2, wallets: {}, coins: {}, txs: {}, treasuryIn: { eth: 0, n: 0 }, queue: [], protocol: { feesEth: 0, launches: 0, volume: 0, buybackEth: 0 }, feed: [] };
-try { const old = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8')); if (old.v === 2) db = Object.assign(db, old); else console.log('ledger v' + old.v + ' predates the ETH ledger; starting fresh'); } catch (e) {}
+// ---------- state (all balances in SOL) ----------
+let db = { v: 3, wallets: {}, coins: {}, txs: {}, treasuryIn: { sol: 0, n: 0 }, queue: [], protocol: { feesSol: 0, launches: 0, volume: 0, buybackSol: 0 }, feed: [] };
+try { const old = JSON.parse(fs.readFileSync(DATA_PATH, 'utf8')); if (old.v === 3) db = Object.assign(db, old); else console.log('ledger v' + old.v + ' predates the Solana ledger; starting fresh'); } catch (e) {}
 let saveT = null; function save() { if (saveT) return; saveT = setTimeout(() => { saveT = null; try { fs.writeFileSync(DATA_PATH, JSON.stringify(db)); } catch (e) {} }, 800); }
-function W(a) { a = a.toLowerCase(); return db.wallets[a] || (db.wallets[a] = { eth: 0, coins: {}, deposited: 0, hist: [] }); }
+function W(a) { return db.wallets[a] || (db.wallets[a] = { sol: 0, coins: {}, deposited: 0, hist: [] }); }
 const hist = (w, e) => { w.hist.unshift({ ts: Date.now(), ...e }); if (w.hist.length > 100) w.hist.pop(); };
 const feed = (e) => { db.feed.unshift({ ts: Date.now(), ...e }); if (db.feed.length > 80) db.feed.pop(); };
 
-// ---------- chain: real ETH deposits to TREASURY (native value transfers), verified on-chain ----------
-const RPCS = (process.env.RH_RPCS || 'https://rpc.mainnet.chain.robinhood.com').split(',');
-const MIN_DEPOSIT = +(process.env.MIN_DEPOSIT || 0.005);   // ETH — smaller transfers are NOT credited
-const CHAIN = { ok: false, block: 0, treasuryEth: 0, lastRead: 0 };
-const hexToNum = (h, dec) => { if (!h || h === '0x') return 0; const bi = BigInt(h); const d = 10n ** BigInt(dec || 18); return Number(bi / d) + Number(bi % d) / Number(d); };
+// ---------- chain: real SOL deposits to TREASURY (system transfers), verified on-chain ----------
+//   TREASURY comes from the environment only. It is never written into this repo and never returned by a public read.
+const RPCS = (process.env.SOL_RPCS || 'https://api.mainnet-beta.solana.com').split(',');
+const MIN_DEPOSIT = +(process.env.MIN_DEPOSIT || 0.1);   // SOL — smaller transfers are NOT credited
+const CHAIN = { ok: false, slot: 0, treasurySol: 0, lastRead: 0 };
+const LAM = 1e9; const isSig = (s) => /^[1-9A-HJ-NP-Za-km-z]{80,90}$/.test(s || '');
 async function rpc(method, params) {
-  let err; for (const u of RPCS) { try { const ac = new AbortController(); const tm = setTimeout(() => ac.abort(), 8000);
+  let err; for (const u of RPCS) { try { const ac = new AbortController(); const tm = setTimeout(() => ac.abort(), 9000);
     const r = await fetch(u, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }), signal: ac.signal }); clearTimeout(tm);
     const j = await r.json(); if (j.error) throw new Error(j.error.message); return j.result; } catch (e) { err = e; } }
   throw err || new Error('rpc');
 }
-async function pollChain() { try { CHAIN.block = Number(BigInt(await rpc('eth_blockNumber', []))); CHAIN.treasuryEth = hexToNum(await rpc('eth_getBalance', [TREASURY, 'latest']), 18); CHAIN.ok = true; CHAIN.lastRead = Date.now(); } catch (e) { CHAIN.ok = false; } }
+async function pollChain() { try { CHAIN.slot = await rpc('getSlot', [{ commitment: 'confirmed' }]); if (TREASURY) CHAIN.treasurySol = (await rpc('getBalance', [TREASURY, { commitment: 'confirmed' }])).value / LAM; CHAIN.ok = true; CHAIN.lastRead = Date.now(); } catch (e) { CHAIN.ok = false; } }
 setInterval(pollChain, 30000); pollChain();
-async function creditDeposit(w, txHash) {
-  if (!/^0x[a-fA-F0-9]{64}$/.test(txHash || '')) throw 'paste the transaction hash';
-  txHash = txHash.toLowerCase(); if (db.txs[txHash]) throw 'already credited';
-  const [tx, rc] = await Promise.all([rpc('eth_getTransactionByHash', [txHash]), rpc('eth_getTransactionReceipt', [txHash])]);
-  if (!tx) throw 'tx not found'; if (!rc) throw 'pending — try again in a few seconds'; if (rc.status !== '0x1') throw 'tx reverted';
-  if ((tx.from || '').toLowerCase() !== w) throw 'tx not from your wallet';
-  if ((tx.to || '').toLowerCase() !== TREASURY.toLowerCase()) throw 'tx is not a transfer to the treasury';
-  const amt = hexToNum(tx.value, 18);
-  if (!(amt > 0)) throw 'no ETH sent to the treasury in this tx';
-  if (amt < MIN_DEPOSIT) throw 'minimum deposit is ' + MIN_DEPOSIT + ' ETH — this transfer (' + amt.toFixed(5) + ') is not credited';
-  const u = W(w); u.eth += amt; u.deposited += amt; db.txs[txHash] = { w, amt, block: Number(BigInt(rc.blockNumber)), ts: Date.now() }; db.treasuryIn.eth += amt; db.treasuryIn.n++; hist(u, { type: 'deposit', amt }); save();
-  return { amt, tx: txHash };
+async function creditDeposit(w, sig) {
+  if (!TREASURY) throw 'deposits are not open yet';
+  if (!isSig(sig)) throw 'paste the transaction signature';
+  if (db.txs[sig]) throw 'already credited';
+  const tx = await rpc('getTransaction', [sig, { encoding: 'jsonParsed', commitment: 'confirmed', maxSupportedTransactionVersion: 0 }]);
+  if (!tx) throw 'tx not found yet — try again in a few seconds'; if (tx.meta && tx.meta.err) throw 'tx failed on-chain';
+  const keys = tx.transaction.message.accountKeys.map((k) => (typeof k === 'string' ? { pubkey: k, signer: false } : k));
+  if (!keys.some((k) => k.signer && k.pubkey === w)) throw 'tx not signed by your wallet';
+  const ti = keys.findIndex((k) => k.pubkey === TREASURY); if (ti < 0) throw 'tx is not a transfer to the treasury';
+  const amt = (tx.meta.postBalances[ti] - tx.meta.preBalances[ti]) / LAM;
+  if (!(amt > 0)) throw 'no SOL sent to the treasury in this tx';
+  if (amt < MIN_DEPOSIT) throw 'minimum deposit is ' + MIN_DEPOSIT + ' SOL — this transfer (' + amt.toFixed(4) + ') is not credited';
+  const u = W(w); u.sol += amt; u.deposited += amt; db.txs[sig] = { w, amt, slot: tx.slot, ts: Date.now() }; db.treasuryIn.sol += amt; db.treasuryIn.n++; hist(u, { type: 'deposit', amt }); save();
+  return { amt, tx: sig };
 }
+// the wallet asks for its transfer destination + a fresh blockhash only at the moment it builds the transaction
+async function depositIntent() { if (!TREASURY) throw 'deposits are not open yet'; const bh = await rpc('getLatestBlockhash', [{ commitment: 'confirmed' }]); return { to: TREASURY, blockhash: bh.value.blockhash }; }
 
 // ---------- live tape (Yahoo chart API, keyless) ----------
 const YF = 'https://query1.finance.yahoo.com/v8/finance/chart/';
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/128 Safari/537.36';
-const MARKETS = { HOOD: 'HOOD', TSLA: 'TSLA', NVDA: 'NVDA', AAPL: 'AAPL', SPY: 'SPY', COIN: 'COIN', MSTR: 'MSTR', GLD: 'GLD', BTC: 'BTC-USD', ETH: 'ETH-USD', SOL: 'SOL-USD' };
+const MARKETS = { SOL: 'SOL-USD', BTC: 'BTC-USD', ETH: 'ETH-USD', DOGE: 'DOGE-USD', TSLA: 'TSLA', NVDA: 'NVDA', AAPL: 'AAPL', SPY: 'SPY', COIN: 'COIN', MSTR: 'MSTR', GLD: 'GLD' };
 const TAPE = {};   // sym -> { px, ts, at, hist: [{t,px}] (5d hourly), d1, d30 }
 async function pollTape() {
   for (const [sym, q] of Object.entries(MARKETS)) {
@@ -90,11 +95,11 @@ const fresh = (sym) => { const t = TAPE[sym]; return !!t && (Date.now() - t.ts) 
 // ---------- brains ----------
 //   each brain looks at the tape and returns a target book: { sym: weight (-1..1 of treasury) }. The agent moves toward it.
 const BRAINS = {
-  MOMENTUM: { name: 'Momentum', line: 'Buys what is already moving. Rides winners, cuts losers.', color: '#00c805',
+  MOMENTUM: { name: 'Momentum', line: 'Buys what is already moving. Rides winners, cuts losers.', color: '#14f195',
     think: (T) => { const r = rank(T, (t) => t.d5); const top = r.slice(0, 3), bot = r.slice(-2); const book = {}; top.forEach(([s], i) => book[s] = AGENT_MAX_POS * (1 - i * .25)); bot.forEach(([s]) => book[s] = -AGENT_MAX_POS * .5); return [book, `5-day leaders ${top.map(([s, t]) => s + ' ' + pct(t.d5)).join(', ')}. Long the leaders, short the tail ${bot.map(([s]) => s).join('/')}.`]; } },
-  REVERSION: { name: 'Mean reversion', line: 'Buys what just fell, sells what just spiked. Bets on the rubber band.', color: '#7dff8a',
+  REVERSION: { name: 'Mean reversion', line: 'Buys what just fell, sells what just spiked. Bets on the rubber band.', color: '#9945ff',
     think: (T) => { const r = rank(T, (t) => -t.d1); const top = r.slice(0, 3); const book = {}; top.forEach(([s], i) => book[s] = AGENT_MAX_POS * (1 - i * .3)); const hot = rank(T, (t) => t.d1)[0]; if (hot) book[hot[0]] = -AGENT_MAX_POS * .4; return [book, `Biggest 24h dips ${top.map(([s, t]) => s + ' ' + pct(t.d1)).join(', ')}. Buying the dip, fading ${hot ? hot[0] + ' ' + pct(hot[1].d1) : 'nothing'}.`]; } },
-  TREND: { name: 'Trend', line: 'Only holds names above their 30-day trend. Patient. Rarely trades.', color: '#c9ffb0',
+  TREND: { name: 'Trend', line: 'Only holds names above their 30-day trend. Patient. Rarely trades.', color: '#c7b3ff',
     think: (T) => { const up = rank(T, (t) => t.d30).filter(([, t]) => t.d30 > 0.02).slice(0, 4); const book = {}; up.forEach(([s]) => book[s] = AGENT_MAX_POS * .8 / Math.max(1, up.length) * 2); return [book, up.length ? `In a 30-day uptrend: ${up.map(([s, t]) => s + ' ' + pct(t.d30)).join(', ')}. Holding the trend, nothing else.` : 'Nothing is trending up on a 30-day view. Sitting in cash.']; } },
   DEGEN: { name: 'Degen', line: 'Crypto only. Max size. Flips direction on every 24h move.', color: '#ffb36b',
     think: (T) => { const cs = ['BTC', 'ETH', 'SOL'].filter((s) => T[s]); const book = {}; cs.forEach((s) => book[s] = Math.sign(T[s].d1 || 1) * AGENT_MAX_POS); return [book, cs.map((s) => (T[s].d1 >= 0 ? 'long ' : 'short ') + s + ' ' + pct(T[s].d1)).join(', ') + '. Size: all of it.']; } },
@@ -107,7 +112,7 @@ const pct = (x) => (x >= 0 ? '+' : '') + (x * 100).toFixed(1) + '%';
 function rank(T, f) { return Object.entries(T).filter(([s]) => fresh(s)).sort((a, b) => f(b[1]) - f(a[1])); }
 
 // ---------- coins + agents ----------
-//   bonding curve: constant product on virtual reserves. price = R / S where R = virtual ETH, S = virtual supply.
+//   bonding curve: constant product on virtual reserves. price = R / S where R = virtual SOL, S = virtual supply.
 function coinView(c, full) {
   const price = c.r / c.s; const mcap = price * CURVE_SUPPLY; const eq = agentEquity(c);
   const v = { id: c.id, name: c.name, ticker: c.ticker, brain: c.brain, brainName: BRAINS[c.brain].name, color: BRAINS[c.brain].color, creator: c.creator.slice(0, 6) + '…' + c.creator.slice(-4), ts: c.ts,
@@ -121,7 +126,7 @@ function agentEquity(c) { return c.agent.cash + c.agent.pos.reduce((a, p) => a +
 function curvePrice(c) { return c.r / c.s; }
 function buyOnCurve(c, usd) { const k = c.r * c.s; const r2 = c.r + usd; const out = c.s - k / r2; c.r = r2; c.s -= out; return out; }
 function sellOnCurve(c, coins) { const k = c.r * c.s; const s2 = c.s + coins; const out = c.r - k / s2; c.s = s2; c.r -= out; return out; }
-function fee(c, eth) { const f = eth * TRADE_FEE; c.agent.cash += f / 2; c.agent.feesIn += f / 2; db.protocol.feesEth += f / 2; return f; }
+function fee(c, sol) { const f = sol * TRADE_FEE; c.agent.cash += f / 2; c.agent.feesIn += f / 2; db.protocol.feesSol += f / 2; return f; }
 
 function agentTick(c, now) {
   const A = c.agent; const T = {}; for (const s of Object.keys(MARKETS)) if (fresh(s)) T[s] = TAPE[s]; if (!Object.keys(T).length) return;
@@ -131,12 +136,12 @@ function agentTick(c, now) {
   for (const p of A.pos.slice()) { const v = posView(p); const want = book[p.sym] || 0; const wrongWay = Math.sign(want) !== (p.side === 'long' ? 1 : -1); const move = v.pnl / p.notional;
     if (wrongWay || move > 0.12 || move < -0.08) { closePos(c, p, v, wrongWay ? 'brain flipped' : move > 0 ? 'took profit' : 'stopped out'); acted = true; } }
   // open toward the target book
-  for (const [sym, wgt] of Object.entries(book)) { if (!wgt || A.pos.some((p) => p.sym === sym)) continue; const notional = Math.min(A.cash * 0.95, Math.abs(wgt) * eq); if (notional < 0.0005) continue;
+  for (const [sym, wgt] of Object.entries(book)) { if (!wgt || A.pos.some((p) => p.sym === sym)) continue; const notional = Math.min(A.cash * 0.95, Math.abs(wgt) * eq); if (notional < 0.01) continue;
     A.cash -= notional; A.pos.push({ sym, side: wgt > 0 ? 'long' : 'short', notional, entry: TAPE[sym].px, ts: now }); A.trades++; A.log.unshift({ ts: now, kind: 'open', sym, side: wgt > 0 ? 'long' : 'short', notional, px: TAPE[sym].px }); if (A.log.length > 200) A.log.pop(); acted = true; }
   if (acted || !A.thoughts.length || now - A.thoughts[0].ts > 20 * 60e3) { A.thoughts.unshift({ ts: now, text: why, equity: agentEquity(c) }); if (A.thoughts.length > 60) A.thoughts.pop(); }
   // fund itself: realised profit above the high-water mark buys the coin back from the curve
-  const eq2 = agentEquity(c); if (A.cash > A.hwm + 0.0002) { const gain = A.cash - A.hwm; const spend = gain * BUYBACK_SHARE; A.cash -= spend; const got = buyOnCurve(c, spend); A.boughtBack += spend; A.boughtCoins += got; db.protocol.buybackEth += spend; A.hwm = A.cash; c.volume += spend;
-    A.log.unshift({ ts: now, kind: 'buyback', eth: spend, coins: got, px: curvePrice(c) }); feed({ type: 'buyback', coin: c.ticker, eth: spend }); }
+  const eq2 = agentEquity(c); if (A.cash > A.hwm + 0.004) { const gain = A.cash - A.hwm; const spend = gain * BUYBACK_SHARE; A.cash -= spend; const got = buyOnCurve(c, spend); A.boughtBack += spend; A.boughtCoins += got; db.protocol.buybackSol += spend; A.hwm = A.cash; c.volume += spend;
+    A.log.unshift({ ts: now, kind: 'buyback', sol: spend, coins: got, px: curvePrice(c) }); feed({ type: 'buyback', coin: c.ticker, sol: spend }); }
   A.curve.push([now, eq2]); if (A.curve.length > 400) A.curve.shift();
 }
 function closePos(c, p, v, why) { const A = c.agent; A.cash += p.notional + v.pnl; A.pos = A.pos.filter((x) => x !== p); A.trades++; if (v.pnl > 0) A.wins++; A.log.unshift({ ts: Date.now(), kind: 'close', sym: p.sym, side: p.side, notional: p.notional, pnl: v.pnl, why }); if (A.log.length > 200) A.log.pop(); }
@@ -146,9 +151,9 @@ setInterval(tick, TICK_SEC * 1000);
 
 // ---------- views ----------
 function account(addr) { const w = W(addr); const coins = Object.entries(w.coins).filter(([, q]) => q > 0).map(([id, qty]) => { const c = db.coins[id]; return c ? { id, ticker: c.ticker, name: c.name, qty, value: qty * curvePrice(c) } : null; }).filter(Boolean);
-  return { wallet: addr.toLowerCase(), eth: w.eth, deposited: w.deposited, coins, launched: Object.values(db.coins).filter((c) => c.creator === addr.toLowerCase()).map((c) => c.id), hist: w.hist.slice(0, 40), queue: db.queue.filter((q) => q.wallet === addr.toLowerCase()).slice(0, 10) }; }
+  return { wallet: addr, sol: w.sol, deposited: w.deposited, coins, launched: Object.values(db.coins).filter((c) => c.creator === addr).map((c) => c.id), hist: w.hist.slice(0, 40), queue: db.queue.filter((q) => q.wallet === addr).slice(0, 10) }; }
 function state() { const coins = Object.values(db.coins).map((c) => coinView(c)); const board = coins.slice().sort((a, b) => (b.agent.equity / b.agent.seed) - (a.agent.equity / a.agent.seed));
-  return { gov: 'CEREBRO', mint: CEREBRO_MINT, treasury: TREASURY, chain: { ok: CHAIN.ok, block: CHAIN.block, treasuryEth: CHAIN.treasuryEth, ethUsd: TAPE.ETH ? TAPE.ETH.px : null }, minDeposit: MIN_DEPOSIT, launchMin: LAUNCH_MIN, tradeFee: TRADE_FEE, brains: Object.entries(BRAINS).map(([k, b]) => ({ id: k, name: b.name, line: b.line, color: b.color })),
+  return { gov: 'CEREBRO', mint: CEREBRO_MINT, depositsOpen: !!TREASURY, chain: { ok: CHAIN.ok, slot: CHAIN.slot, treasurySol: CHAIN.treasurySol, solUsd: TAPE.SOL ? TAPE.SOL.px : null }, minDeposit: MIN_DEPOSIT, launchMin: LAUNCH_MIN, tradeFee: TRADE_FEE, brains: Object.entries(BRAINS).map(([k, b]) => ({ id: k, name: b.name, line: b.line, color: b.color })),
     tape: Object.keys(MARKETS).map((s) => ({ sym: s, px: TAPE[s] ? TAPE[s].px : null, d1: TAPE[s] ? TAPE[s].d1 : 0, fresh: fresh(s) })), coins: board, protocol: { ...db.protocol, agents: coins.length, agentsEquity: coins.reduce((a, c) => a + c.agent.equity, 0), deposits: db.treasuryIn }, feed: db.feed.slice(0, 30), t: Date.now() }; }
 
 // ---------- http ----------
@@ -163,29 +168,30 @@ http.createServer(async (req, res) => {
   if (req.method !== 'POST') { res.writeHead(405); return res.end(); }
   const d = await body(req);
   if (u === '/api/coin') { const c = db.coins[d.id]; return c ? json(res, 200, coinView(c, true)) : json(res, 200, { error: 'no such coin' }); }
-  if (!isWallet(d.wallet || '')) return json(res, 200, { error: 'connect a Robinhood Chain wallet' });
-  const addr = d.wallet.toLowerCase(); const w = W(addr);
+  if (!isWallet(d.wallet || '')) return json(res, 200, { error: 'connect a Solana wallet' });
+  const addr = d.wallet; const w = W(addr);
   if (u === '/api/account') return json(res, 200, account(addr));
+  if (u === '/api/deposit/intent') { try { return json(res, 200, await depositIntent()); } catch (e) { return json(res, 200, { error: String(e.message || e) }); } }
   if (u === '/api/deposit') { try { const r = await creditDeposit(addr, d.tx); return json(res, 200, { ok: true, ...r, ...account(addr) }); } catch (e) { return json(res, 200, { error: String(e.message || e) }); } }
-  if (u === '/api/dev/faucet' && process.env.DEV_FAUCET === '1') { w.eth += num(d.amount) || 0; save(); return json(res, 200, { ok: true, ...account(addr) }); }   // LOCAL TESTING ONLY
+  if (u === '/api/dev/faucet' && process.env.DEV_FAUCET === '1') { w.sol += num(d.amount) || 0; save(); return json(res, 200, { ok: true, ...account(addr) }); }   // LOCAL TESTING ONLY
   if (u === '/api/launch') {
     const name = String(d.name || '').trim().slice(0, 32), ticker = String(d.ticker || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8); const brain = String(d.brain || '').toUpperCase();
     if (name.length < 2) return json(res, 200, { error: 'give it a name' }); if (ticker.length < 2) return json(res, 200, { error: 'give it a ticker' }); if (!BRAINS[brain]) return json(res, 200, { error: 'pick a brain' });
     if (Object.values(db.coins).some((c) => c.ticker === ticker)) return json(res, 200, { error: ticker + ' is taken' });
-    const seed = num(d.seed, w.eth); if (seed < LAUNCH_MIN) return json(res, 200, { error: 'minimum seed is ' + LAUNCH_MIN + ' ETH' + (w.eth < LAUNCH_MIN ? ' — deposit first' : '') });
-    w.eth -= seed; const proto = seed * LAUNCH_FEE; db.protocol.feesEth += proto; const cash = seed - proto;
+    const seed = num(d.seed, w.sol); if (seed < LAUNCH_MIN) return json(res, 200, { error: 'minimum seed is ' + LAUNCH_MIN + ' SOL' + (w.sol < LAUNCH_MIN ? ' — deposit first' : '') });
+    w.sol -= seed; const proto = seed * LAUNCH_FEE; db.protocol.feesSol += proto; const cash = seed - proto;
     const c = { id: id8(), name, ticker, brain, creator: addr, ts: Date.now(), r0: CURVE_V, r: CURVE_V, s: CURVE_SUPPLY, volume: 0, trades: [], agent: { seed: cash, cash, hwm: cash, pos: [], trades: 0, wins: 0, feesIn: 0, boughtBack: 0, boughtCoins: 0, thoughts: [], log: [], curve: [[Date.now(), cash]] } };
-    db.coins[c.id] = c; db.protocol.launches++; hist(w, { type: 'launch', amt: seed, coin: ticker }); feed({ type: 'launch', coin: ticker, brain, eth: cash }); agentTick(c, Date.now()); save();
+    db.coins[c.id] = c; db.protocol.launches++; hist(w, { type: 'launch', amt: seed, coin: ticker }); feed({ type: 'launch', coin: ticker, brain, sol: cash }); agentTick(c, Date.now()); save();
     return json(res, 200, { ok: true, coin: coinView(c, true), ...account(addr) });
   }
-  if (u === '/api/buy') { const c = db.coins[d.id]; if (!c) return json(res, 200, { error: 'no such coin' }); const usd = num(d.amount, w.eth); if (usd < 0.0002) return json(res, 200, { error: 'minimum 0.0002 ETH' });
-    w.eth -= usd; const f = fee(c, usd); const got = buyOnCurve(c, usd - f); w.coins[c.id] = (w.coins[c.id] || 0) + got; c.volume += usd; db.protocol.volume += usd; c.trades.unshift({ ts: Date.now(), side: 'buy', usd, coins: got, px: curvePrice(c) }); if (c.trades.length > 200) c.trades.pop(); hist(w, { type: 'buy', amt: usd, coin: c.ticker }); save();
+  if (u === '/api/buy') { const c = db.coins[d.id]; if (!c) return json(res, 200, { error: 'no such coin' }); const usd = num(d.amount, w.sol); if (usd < 0.005) return json(res, 200, { error: 'minimum 0.005 SOL' });
+    w.sol -= usd; const f = fee(c, usd); const got = buyOnCurve(c, usd - f); w.coins[c.id] = (w.coins[c.id] || 0) + got; c.volume += usd; db.protocol.volume += usd; c.trades.unshift({ ts: Date.now(), side: 'buy', usd, coins: got, px: curvePrice(c) }); if (c.trades.length > 200) c.trades.pop(); hist(w, { type: 'buy', amt: usd, coin: c.ticker }); save();
     return json(res, 200, { ok: true, got, coin: coinView(c), ...account(addr) }); }
   if (u === '/api/sell') { const c = db.coins[d.id]; if (!c) return json(res, 200, { error: 'no such coin' }); const q = num(d.amount, w.coins[c.id] || 0); if (!q) return json(res, 200, { error: 'nothing to sell' });
-    w.coins[c.id] -= q; const gross = sellOnCurve(c, q); const f = fee(c, gross); w.eth += gross - f; c.volume += gross; db.protocol.volume += gross; c.trades.unshift({ ts: Date.now(), side: 'sell', usd: gross, coins: q, px: curvePrice(c) }); if (c.trades.length > 200) c.trades.pop(); hist(w, { type: 'sell', amt: gross - f, coin: c.ticker }); save();
+    w.coins[c.id] -= q; const gross = sellOnCurve(c, q); const f = fee(c, gross); w.sol += gross - f; c.volume += gross; db.protocol.volume += gross; c.trades.unshift({ ts: Date.now(), side: 'sell', usd: gross, coins: q, px: curvePrice(c) }); if (c.trades.length > 200) c.trades.pop(); hist(w, { type: 'sell', amt: gross - f, coin: c.ticker }); save();
     return json(res, 200, { ok: true, usd: gross - f, coin: coinView(c), ...account(addr) }); }
-  if (u === '/api/withdraw') { const x = num(d.amount, w.eth); if (x < 0.001) return json(res, 200, { error: 'minimum 0.001 ETH' }); w.eth -= x; const q = { id: id8(), wallet: addr, amt: x, asset: 'ETH', ts: Date.now(), status: 'queued', tx: null }; db.queue.unshift(q); if (db.queue.length > 500) db.queue.pop(); hist(w, { type: 'withdraw', amt: x }); save(); return json(res, 200, { ok: true, queued: q, ...account(addr) }); }
+  if (u === '/api/withdraw') { const x = num(d.amount, w.sol); if (x < 0.02) return json(res, 200, { error: 'minimum 0.02 SOL' }); w.sol -= x; const q = { id: id8(), wallet: addr, amt: x, asset: 'SOL', ts: Date.now(), status: 'queued', tx: null }; db.queue.unshift(q); if (db.queue.length > 500) db.queue.pop(); hist(w, { type: 'withdraw', amt: x }); save(); return json(res, 200, { ok: true, queued: q, ...account(addr) }); }
   if (u === '/api/admin/queue') { if (!ADMIN_KEY || d.key !== ADMIN_KEY) return json(res, 200, { error: 'no' }); return json(res, 200, { ok: true, queue: db.queue.slice(0, 100), deposits: Object.entries(db.txs).map(([tx, t]) => ({ tx, ...t })).slice(-50) }); }
   if (u === '/api/admin/paid') { if (!ADMIN_KEY || d.key !== ADMIN_KEY) return json(res, 200, { error: 'no' }); const q = db.queue.find((x) => x.id === d.id); if (!q) return json(res, 200, { error: 'no such item' }); q.status = 'paid'; q.tx = d.tx || null; q.paidTs = Date.now(); save(); return json(res, 200, { ok: true, q }); }
   json(res, 404, { error: 'unknown route' });
-}).listen(PORT, () => console.log('CEREBRO · memecoins with a brain · Robinhood Chain · :' + PORT));
+}).listen(PORT, () => console.log('CEREBRO · memecoins with a brain · Solana · :' + PORT + (TREASURY ? '' : ' · TREASURY unset, deposits closed')));

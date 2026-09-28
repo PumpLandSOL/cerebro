@@ -5,14 +5,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>CEREBRO — memecoins with a brain</title>
 <meta name="description" content="A launchpad for AI agents that earn, trade and fund themselves. Every coin launched on CEREBRO comes with an agent that trades the live tape and buys its own coin back with the profits.">
-<meta property="og:url" content="https://cerebropad.xyz/"><link rel="canonical" href="https://cerebropad.xyz/"><meta property="og:title" content="CEREBRO — memecoins with a brain"><meta property="og:description" content="Launch a coin. It gets a treasury, a brain and a trading desk. Profits buy the coin back. On Robinhood Chain."><meta property="og:image" content="https://cerebropad.xyz/brand/cerebro-banner.png"><meta name="twitter:card" content="summary_large_image">
+<meta property="og:url" content="https://cerebropad.xyz/"><link rel="canonical" href="https://cerebropad.xyz/"><meta property="og:title" content="CEREBRO — memecoins with a brain"><meta property="og:description" content="Launch a coin. It gets a treasury, a brain and a trading desk. Profits buy the coin back. On Solana."><meta property="og:image" content="https://cerebropad.xyz/brand/cerebro-banner.png"><meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Michroma&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --void:#050705; --hull:#0a0f0c; --hull2:#0f1611; --edge:#1b2920; --edge2:#25382b;
-  --ink:#ecf6ee; --dim:#a9bcae; --mut:#6f8577;
-  --a:#00c805; --b:#19d81f; --c:#7dff8a; --red:#ff5c5c; --ok:#00c805; --v:#19d81f; --amber:#ffd27b;
+  --void:#07060c; --hull:#0c0a14; --hull2:#120f1d; --edge:#221c33; --edge2:#2e2646;
+  --ink:#f1eefa; --dim:#b3aac9; --mut:#776e8f;
+  --a:#14f195; --b:#9945ff; --c:#dc1fff; --red:#ff5c5c; --ok:#14f195; --v:#14f195; --amber:#ffd27b;
   --iri:linear-gradient(100deg,var(--a),var(--b) 50%,var(--c)); --cut:14px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -29,7 +29,7 @@ a{color:inherit}
 .scan{position:fixed;inset:0;z-index:-1;pointer-events:none;background:repeating-linear-gradient(0deg,#ffffff05 0 1px,transparent 1px 4px)}
 @media(prefers-reduced-motion:reduce){.amb{animation:none}}
 
-header{position:sticky;top:0;z-index:40;background:#050705cc;backdrop-filter:blur(18px);border-bottom:1px solid var(--edge)}
+header{position:sticky;top:0;z-index:40;background:#07060ccc;backdrop-filter:blur(18px);border-bottom:1px solid var(--edge)}
 .hin{max-width:1280px;margin:0 auto;padding:0 20px;height:60px;display:flex;align-items:center;gap:16px}
 .logo{display:flex;align-items:center;gap:11px;font-family:'Michroma';font-size:16px;letter-spacing:.32em}
 .logo i{width:26px;height:26px;border-radius:50%;position:relative;display:block;background:conic-gradient(from 0deg,var(--a),var(--b),var(--c),var(--a))}
@@ -42,7 +42,7 @@ nav.tabs button.on{color:var(--ink)}nav.tabs button.on::after{content:"";positio
 .hr a{font-size:12px;color:var(--dim);text-decoration:none}
 .live{display:flex;align-items:center;gap:7px;font-size:10px;letter-spacing:.14em;color:var(--mut);text-transform:uppercase}
 .live::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--a);box-shadow:0 0 10px var(--a);animation:pulse 1.6s infinite}
-@keyframes pulse{50%{box-shadow:0 0 0 5px #00c80522}}
+@keyframes pulse{50%{box-shadow:0 0 0 5px #14f19522}}
 
 .btn{font-family:'Sora';font-weight:500;font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:none;background:var(--hull2);color:var(--ink);padding:12px 18px;transition:.15s;clip-path:polygon(9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%,0 9px);box-shadow:inset 0 0 0 1px var(--edge2)}
 .btn:hover{background:#152018}
@@ -59,7 +59,7 @@ h1{font-family:'Michroma';font-weight:400;font-size:clamp(30px,4.4vw,56px);line-
 h1 em{font-style:normal;background:var(--iri);-webkit-background-clip:text;background-clip:text;color:transparent}
 .lead{font-size:16px;color:var(--dim);max-width:560px;margin-top:20px;line-height:1.75}.lead b{color:var(--ink);font-weight:500}
 .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
-.monitor{background:#0a0f0ccc;backdrop-filter:blur(20px);box-shadow:inset 0 0 0 1px var(--edge2);padding:16px 18px 14px;clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut))}
+.monitor{background:#0c0a14cc;backdrop-filter:blur(20px);box-shadow:inset 0 0 0 1px var(--edge2);padding:16px 18px 14px;clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut))}
 .monitor .top{display:flex;justify-content:space-between;font-family:'Michroma';font-size:9.5px;letter-spacing:.2em;color:var(--mut);margin-bottom:10px}
 .monitor canvas{width:100%;height:220px;display:block}
 .monitor .bot{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--dim)}
@@ -75,8 +75,8 @@ h1 em{font-style:normal;background:var(--iri);-webkit-background-clip:text;backg
 .sec .r{font-size:12.5px;color:var(--mut)}
 
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
-.chart{background:#0a0f0ccc;backdrop-filter:blur(14px);box-shadow:inset 0 0 0 1px var(--edge);cursor:pointer;transition:.15s;position:relative;clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
-.chart:hover{box-shadow:inset 0 0 0 1px var(--edge2);background:#0f1611cc}
+.chart{background:#0c0a14cc;backdrop-filter:blur(14px);box-shadow:inset 0 0 0 1px var(--edge);cursor:pointer;transition:.15s;position:relative;clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+.chart:hover{box-shadow:inset 0 0 0 1px var(--edge2);background:#120f1dcc}
 .chart .hd{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--edge)}
 .chart .tk{font-family:'Michroma';font-size:13px;letter-spacing:.1em}
 .chart .nm{font-size:12.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
@@ -89,16 +89,16 @@ h1 em{font-style:normal;background:var(--iri);-webkit-background-clip:text;backg
 .rank{position:absolute;left:0;top:0;background:var(--iri);color:#03110a;font-size:9.5px;font-weight:600;padding:3px 9px;letter-spacing:.1em}
 
 .coinwrap{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:22px;align-items:start}
-.panel{background:#0a0f0ccc;backdrop-filter:blur(16px);box-shadow:inset 0 0 0 1px var(--edge);padding:20px;clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut))}
+.panel{background:#0c0a14cc;backdrop-filter:blur(16px);box-shadow:inset 0 0 0 1px var(--edge);padding:20px;clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut))}
 .panel h3{font-family:'Michroma';font-weight:400;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
 .bigcanvas{width:100%;height:280px;display:block;background:repeating-linear-gradient(90deg,transparent 0 31px,#ffffff08 31px 32px),repeating-linear-gradient(0deg,transparent 0 31px,#ffffff06 31px 32px);box-shadow:inset 0 0 0 1px var(--edge)}
 .row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #ffffff0a;font-size:13px;color:var(--dim)}.row b{font-weight:500;color:var(--ink);text-align:right}
 .field{display:flex;align-items:center;gap:8px;background:#ffffff08;box-shadow:inset 0 -1px 0 var(--edge2);padding:3px 6px 3px 12px;margin:8px 0;transition:.15s}
-.field:focus-within{box-shadow:inset 0 -1px 0 var(--a);background:#00c8050a}
+.field:focus-within{box-shadow:inset 0 -1px 0 var(--a);background:#14f1950a}
 .field input,.field select{flex:1;min-width:0;border:none;outline:none;background:none;font-family:'Sora';font-size:15px;padding:9px 0;color:var(--ink)}
 .field input::placeholder{color:var(--mut)}.field select option{background:var(--hull);color:var(--ink)}
 .field .u{font-size:11px;letter-spacing:.14em;color:var(--dim)}
-.field .mx{font-size:10px;letter-spacing:.14em;color:var(--a);padding:5px 9px;cursor:pointer;box-shadow:inset 0 0 0 1px #00c80555}
+.field .mx{font-size:10px;letter-spacing:.14em;color:var(--a);padding:5px 9px;cursor:pointer;box-shadow:inset 0 0 0 1px #14f19555}
 .seg{display:flex;gap:6px}.seg button{flex:1;border:none;background:none;box-shadow:inset 0 0 0 1px var(--edge);color:var(--dim);font-family:'Sora';font-size:12px;letter-spacing:.08em;padding:9px;cursor:pointer;border-radius:99px}.seg button.on{background:var(--ink);color:#03110a;font-weight:500;box-shadow:none}
 .log{max-height:300px;overflow:auto;font-size:12.5px;scrollbar-width:thin;scrollbar-color:var(--edge2) transparent}
 .log .r{display:flex;gap:12px;padding:7px 0;border-bottom:1px solid #ffffff0a}.log .r span:first-child{color:var(--mut);min-width:44px}
@@ -109,11 +109,11 @@ h1 em{font-style:normal;background:var(--iri);-webkit-background-clip:text;backg
 .launch{max-width:720px;margin:0 auto}
 .brains{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
 .brain{box-shadow:inset 0 0 0 1px var(--edge);padding:14px;cursor:pointer;background:#ffffff05;transition:.15s;clip-path:polygon(10px 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%,0 10px)}
-.brain.on{box-shadow:inset 0 0 0 1px var(--a);background:#00c8050c}
+.brain.on{box-shadow:inset 0 0 0 1px var(--a);background:#14f1950c}
 .brain b{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:500}.brain b i{width:9px;height:9px;border-radius:50%;display:inline-block}
 .brain p{font-size:12px;color:var(--dim);margin-top:5px;line-height:1.45}
 .how{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
-.step{background:#0a0f0ccc;box-shadow:inset 0 0 0 1px var(--edge);padding:18px;clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+.step{background:#0c0a14cc;box-shadow:inset 0 0 0 1px var(--edge);padding:18px;clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
 .step i{font-family:'Michroma';font-size:9.5px;letter-spacing:.2em;color:var(--a);font-style:normal}
 .step h3{font-size:16px;font-weight:500;margin:8px 0 6px}.step p{font-size:13px;color:var(--dim);line-height:1.6}
 
@@ -131,10 +131,10 @@ h1 em{font-style:normal;background:var(--iri);-webkit-background-clip:text;backg
 .ca .t{font-family:'Michroma';font-size:9.5px;letter-spacing:.14em;color:var(--dim)}.ca code{font-family:'Sora';font-size:12px;word-break:break-all}
 footer{margin-top:50px;border-top:1px solid var(--edge);padding-top:16px;font-size:12px;color:var(--mut);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;letter-spacing:.06em}
 
-.modal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:#050705cc;backdrop-filter:blur(14px)}.modal.on{display:flex}
+.modal{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:#07060ccc;backdrop-filter:blur(14px)}.modal.on{display:flex}
 .mcard{width:min(420px,92vw);background:var(--hull);box-shadow:inset 0 0 0 1px var(--edge2);padding:26px;clip-path:polygon(var(--cut) 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%,0 var(--cut))}
 .mcard h3{font-family:'Michroma';font-weight:400;font-size:14px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:10px}.mcard p{color:var(--dim);font-size:13.5px;margin-bottom:14px}
-.toast{position:fixed;right:26px;bottom:26px;transform:translateY(16px);z-index:90;background:#0f1611ee;backdrop-filter:blur(12px);color:var(--ink);font-size:13px;padding:13px 18px 13px 16px;opacity:0;transition:.25s;pointer-events:none;max-width:min(420px,88vw);border-left:2px solid var(--a)}
+.toast{position:fixed;right:26px;bottom:26px;transform:translateY(16px);z-index:90;background:#120f1dee;backdrop-filter:blur(12px);color:var(--ink);font-size:13px;padding:13px 18px 13px 16px;opacity:0;transition:.25s;pointer-events:none;max-width:min(420px,88vw);border-left:2px solid var(--a)}
 .toast.on{opacity:1;transform:none}.toast.err{border-left-color:var(--red)}
 @media(max-width:900px){.hero{grid-template-columns:1fr}.coinwrap{grid-template-columns:1fr}.strip{grid-template-columns:repeat(2,1fr)}.strip .st:last-child{grid-column:1/-1}.brains,.how,.feedwrap{grid-template-columns:1fr}nav.tabs{display:none}.toast{right:12px;left:12px;bottom:14px}}
 </style>
@@ -152,9 +152,9 @@ footer{margin-top:50px;border-top:1px solid var(--edge);padding-top:16px;font-si
   <section class="view on" data-view="home">
     <div class="hero">
       <div>
-        <div class="lab">Launchpad · Robinhood Chain</div>
+        <div class="lab">Launchpad · Solana</div>
         <h1 style="margin-top:8px">Memecoins<br>with a <em>brain.</em></h1>
-        <p class="lead">Launch a coin and it gets a <b>treasury</b>, a <b>brain</b> and a <b>trading desk</b>. The agent trades tokenized stocks and crypto on the live tape, earns fees on every trade of its coin, and <b>buys the coin back with its profits</b>. Seeded and settled in ETH. Coins that earn, trade and fund themselves.</p>
+        <p class="lead">Launch a coin and it gets a <b>treasury</b>, a <b>brain</b> and a <b>trading desk</b>. The agent trades tokenized stocks and crypto on the live tape, earns fees on every trade of its coin, and <b>buys the coin back with its profits</b>. Seeded and settled in SOL. Coins that earn, trade and fund themselves.</p>
         <div class="cta"><button class="btn fill" data-go="launch">Launch a brain</button><button class="btn" data-go="how">How it works</button></div>
       </div>
       <div class="monitor"><div class="top"><span>WARD · LIVE EQUITY · ALL AGENTS</span><span id="mon-n">—</span></div><canvas id="mon"></canvas><div class="bot" id="mon-legend"></div></div>
@@ -196,9 +196,9 @@ footer{margin-top:50px;border-top:1px solid var(--edge);padding-top:16px;font-si
       <div>
         <div class="panel">
           <div class="seg"><button class="on" id="t-buy">Buy</button><button id="t-sell">Sell</button></div>
-          <div class="field"><input id="c-in" type="number" placeholder="0.00" min="0"><span class="u" id="c-unit">ETH</span><span class="mx" id="c-mx">MAX</span></div>
+          <div class="field"><input id="c-in" type="number" placeholder="0.00" min="0"><span class="u" id="c-unit">SOL</span><span class="mx" id="c-mx">MAX</span></div>
           <div class="row"><span>price</span><b id="c-px">—</b></div><div class="row"><span>market cap</span><b id="c-mc">—</b></div><div class="row"><span>you receive</span><b id="c-out">—</b></div><div class="row"><span>fee 1%</span><b>½ to the agent · ½ to protocol</b></div>
-          <div class="row"><span>your ETH</span><b id="c-usdg">—</b></div><div class="row"><span>you hold</span><b id="c-hold">—</b></div>
+          <div class="row"><span>your SOL</span><b id="c-usdg">—</b></div><div class="row"><span>you hold</span><b id="c-hold">—</b></div>
           <button class="btn fill wide" id="c-act" style="margin-top:12px">Buy</button>
         </div>
         <div class="panel" style="margin-top:16px"><h3>The agent</h3>
@@ -213,16 +213,16 @@ footer{margin-top:50px;border-top:1px solid var(--edge);padding-top:16px;font-si
   <section class="view" data-view="launch">
     <div class="launch">
       <div class="lab">New patient</div><h2 style="font-size:34px;letter-spacing:-.02em;margin:6px 0 6px">Launch a coin with a brain.</h2>
-      <p style="color:var(--dim);margin-bottom:14px">Seed ETH becomes the agent's treasury (5% to the protocol). The coin starts on a bonding curve. Every buy or sell pays 1%: half to the agent, half to the protocol. The agent trades the live tape and buys the coin back with realised profits.</p>
+      <p style="color:var(--dim);margin-bottom:14px">Seed SOL becomes the agent's treasury (5% to the protocol). The coin starts on a bonding curve. Every buy or sell pays 1%: half to the agent, half to the protocol. The agent trades the live tape and buys the coin back with realised profits.</p>
       <div class="panel">
         <div class="field"><input id="l-name" placeholder="name (e.g. Dr. Gains)" maxlength="32"></div>
         <div class="field"><input id="l-tk" placeholder="ticker (e.g. GAINS)" maxlength="8" style="text-transform:uppercase"></div>
         <div class="lab" style="margin-top:12px">Pick a brain</div>
         <div class="brains" id="brains"></div>
-        <div class="field"><input id="l-seed" type="number" placeholder="seed ETH (min 0.01)" min="0.01" step="0.001"><span class="u">ETH</span><span class="mx" id="l-mx">MAX</span></div>
-        <div class="row"><span>your ETH</span><b id="l-usdg">—</b></div><div class="row"><span>agent treasury</span><b id="l-tre">—</b></div>
+        <div class="field"><input id="l-seed" type="number" placeholder="seed SOL (min 0.2)" min="0.2" step="0.01"><span class="u">SOL</span><span class="mx" id="l-mx">MAX</span></div>
+        <div class="row"><span>your SOL</span><b id="l-usdg">—</b></div><div class="row"><span>agent treasury</span><b id="l-tre">—</b></div>
         <button class="btn fill wide" id="l-go" style="margin-top:12px">Launch</button>
-        <p style="font-size:12.5px;color:var(--dim);margin-top:10px">No ETH on your desk? <a href="#" data-go="desk">Deposit →</a></p>
+        <p style="font-size:12.5px;color:var(--dim);margin-top:10px">No SOL on your desk? <a href="#" data-go="desk">Deposit →</a></p>
       </div>
     </div>
   </section>
@@ -232,16 +232,16 @@ footer{margin-top:50px;border-top:1px solid var(--edge);padding-top:16px;font-si
     <div class="sec"><h2>My desk</h2><span class="r mono" id="d-w">—</span></div>
     <div class="coinwrap">
       <div>
-        <div class="panel"><h3>Deposit ETH</h3><p style="font-size:13.5px;color:var(--dim)">Send ETH on Robinhood Chain to the treasury. It is credited to your desk once the receipt confirms. Minimum <b id="d-min">0.005</b> ETH.</p>
-          <div class="field"><input id="d-in" type="number" placeholder="amount" min="0.005" step="0.001"><span class="u">ETH</span></div>
-          <div class="row"><span>treasury</span><b id="d-tre">—</b></div><div class="row"><span>credited so far</span><b id="d-dep">—</b></div>
-          <button class="btn fill wide" id="d-send" style="margin-top:10px">Send ETH from wallet</button>
-          <p style="font-size:12.5px;color:var(--dim);margin:12px 0 4px">Already sent? Paste the transaction hash:</p>
-          <div class="field"><input id="d-tx" placeholder="0x… transaction hash" spellcheck="false"></div><button class="btn wide" id="d-credit">Credit my deposit</button></div>
-        <div class="panel" style="margin-top:16px"><h3>Withdraw ETH</h3><div class="field"><input id="d-wd" type="number" placeholder="amount" min="0.001" step="0.001"><span class="u">ETH</span></div><button class="btn wide" id="d-wdgo">Queue withdrawal</button><p style="font-size:12.5px;color:var(--dim);margin-top:8px">Paid by hand from a cold wallet, usually within 24 hours. No hot key on the server.</p><div id="d-queue" style="margin-top:8px"></div></div>
+        <div class="panel"><h3>Deposit SOL</h3><p style="font-size:13.5px;color:var(--dim)">Send SOL from your wallet. Your wallet builds the transfer, the server verifies it on Solana once confirmed, and your desk is credited. Minimum <b id="d-min">0.1</b> SOL.</p>
+          <div class="field"><input id="d-in" type="number" placeholder="amount" min="0.1" step="0.01"><span class="u">SOL</span></div>
+          <div class="row"><span>deposits</span><b id="d-open">—</b></div><div class="row"><span>credited so far</span><b id="d-dep">—</b></div>
+          <button class="btn fill wide" id="d-send" style="margin-top:10px">Send SOL from wallet</button>
+          <p style="font-size:12.5px;color:var(--dim);margin:12px 0 4px">Already sent? Paste the transaction signature:</p>
+          <div class="field"><input id="d-tx" placeholder="transaction signature" spellcheck="false"></div><button class="btn wide" id="d-credit">Credit my deposit</button></div>
+        <div class="panel" style="margin-top:16px"><h3>Withdraw SOL</h3><div class="field"><input id="d-wd" type="number" placeholder="amount" min="0.02" step="0.01"><span class="u">SOL</span></div><button class="btn wide" id="d-wdgo">Queue withdrawal</button><p style="font-size:12.5px;color:var(--dim);margin-top:8px">Paid by hand from a cold wallet, usually within 24 hours. No hot key on the server.</p><div id="d-queue" style="margin-top:8px"></div></div>
       </div>
       <div>
-        <div class="panel"><div class="strip" style="margin:0;grid-template-columns:1fr 1fr"><div class="st"><div class="l">ETH</div><div class="n" id="d-usdg">—</div></div><div class="st"><div class="l">coins held</div><div class="n" id="d-val">—</div></div></div>
+        <div class="panel"><div class="strip" style="margin:0;grid-template-columns:1fr 1fr"><div class="st"><div class="l">SOL</div><div class="n" id="d-usdg">—</div></div><div class="st"><div class="l">coins held</div><div class="n" id="d-val">—</div></div></div>
           <h3 style="margin-top:14px">Holdings</h3><div id="d-coins"></div><h3 style="margin-top:14px">Your launches</h3><div id="d-launch"></div><h3 style="margin-top:14px">History</h3><div class="log" id="d-hist"></div></div>
       </div>
     </div>
@@ -251,31 +251,31 @@ footer{margin-top:50px;border-top:1px solid var(--edge);padding-top:16px;font-si
   <section class="view" data-view="how">
     <div class="lab">Protocol</div><h2 style="font-size:34px;letter-spacing:-.02em;margin:6px 0 4px">How a coin gets a brain.</h2>
     <div class="how">
-      <div class="step"><i>01 · LAUNCH</i><h3>Seed the treasury</h3><p>Pick a name, a ticker and a brain. Your ETH seed becomes the agent's trading capital (5% to the protocol). The coin lists on a bonding curve at a fixed starting price.</p></div>
+      <div class="step"><i>01 · LAUNCH</i><h3>Seed the treasury</h3><p>Pick a name, a ticker and a brain. Your SOL seed becomes the agent's trading capital (5% to the protocol). The coin lists on a bonding curve at a fixed starting price.</p></div>
       <div class="step"><i>02 · EARN</i><h3>Fees feed the agent</h3><p>Every buy and sell of the coin pays 1%. Half lands in the agent's treasury as cash, half goes to the protocol. The more the coin trades, the more capital the brain has to work with.</p></div>
-      <div class="step"><i>03 · TRADE</i><h3>The brain works the tape</h3><p>Every few seconds the agent reads live prices for HOOD, TSLA, NVDA, AAPL, SPY, COIN, MSTR, GLD, BTC, ETH and SOL, and moves its book toward what its brain wants. Positions take profit at +12% and stop at −8%. It never puts more than 35% in one name.</p></div>
+      <div class="step"><i>03 · TRADE</i><h3>The brain works the tape</h3><p>Every few seconds the agent reads live prices for SOL, BTC, ETH, DOGE, TSLA, NVDA, AAPL, SPY, COIN, MSTR and GLD, and moves its book toward what its brain wants. Positions take profit at +12% and stop at −8%. It never puts more than 35% in one name.</p></div>
       <div class="step"><i>04 · FUND ITSELF</i><h3>Profit buys the coin back</h3><p>When the agent's cash rises above its high-water mark, half of the gain buys the coin on the curve. Bought-back coins sit in the agent's treasury. Trading skill becomes buy pressure.</p></div>
       <div class="step"><i>05 · SIX BRAINS</i><h3>Momentum · Reversion · Trend · Degen · Hedge · Vol hunter</h3><p>Each brain is a deterministic strategy over the tape. Its reasoning is printed on the coin page every time it acts, so you can read exactly why it did what it did.</p></div>
-      <div class="step"><i>06 · REAL ETH</i><h3>Deposits verified on-chain</h3><p>Every ETH on the ward arrived as a real transfer on Robinhood Chain that the server verified against the receipt. Withdrawals are paid from a cold wallet. There is no hot key on the server.</p></div>
+      <div class="step"><i>06 · REAL SOL</i><h3>Deposits verified on-chain</h3><p>Every SOL on the ward arrived as a real transfer on Solana that the server verified against the confirmed transaction. Withdrawals are paid from a cold wallet. There is no hot key on the server.</p></div>
     </div>
     <div class="sec" style="margin-top:34px"><h2>Answers</h2></div>
     <div class="faq">
-      <details open><summary>What actually is the agent?</summary><div class="a">A treasury of ETH plus a strategy. At launch it holds your seed. Every tick it reads the live tape, decides a target book according to its brain, and opens or closes positions to match. Positions are marked against live prices; realised P&amp;L moves its cash. It is fully deterministic, every decision is logged with the reasoning, and it runs whether or not anyone is watching.</div></details>
+      <details open><summary>What actually is the agent?</summary><div class="a">A treasury of SOL plus a strategy. At launch it holds your seed. Every tick it reads the live tape, decides a target book according to its brain, and opens or closes positions to match. Positions are marked against live prices; realised P&amp;L moves its cash. It is fully deterministic, every decision is logged with the reasoning, and it runs whether or not anyone is watching.</div></details>
       <details><summary>How does the coin fund itself?</summary><div class="a">Two ways. <b>Fees:</b> half of the 1% on every coin trade is paid into the agent's treasury. <b>Buybacks:</b> whenever the agent's cash exceeds its previous high-water mark, half of the new profit buys the coin on the bonding curve. The bought coins stay in the treasury. The coin's price only moves on the curve, so every buyback is real buy pressure.</div></details>
-      <details><summary>What is the bonding curve?</summary><div class="a">A constant-product curve on virtual reserves, one billion coins against a virtual ETH reserve. Buying moves the price up along the curve, selling moves it down, and there is no order book and no counterparty. The curve is the only market for the coin.</div></details>
+      <details><summary>What is the bonding curve?</summary><div class="a">A constant-product curve on virtual reserves, one billion coins against a virtual SOL reserve. Buying moves the price up along the curve, selling moves it down, and there is no order book and no counterparty. The curve is the only market for the coin.</div></details>
       <details><summary>Can the agent lose money?</summary><div class="a">Yes. It trades real prices with real stops. A losing streak shrinks its treasury, and a treasury below its high-water mark makes no buybacks until it recovers. That is the game: pick a brain you believe in, or launch your own and let the ward rank it.</div></details>
       <details><summary>What can I see about an agent?</summary><div class="a">Everything. Equity over time, open positions with live P&amp;L, every open, close and buyback with a timestamp, the reasoning behind each decision, win rate, fees earned and coins bought back. The ward ranks all agents by equity growth since seed.</div></details>
-      <details><summary>Is my ETH actually deposited?</summary><div class="a">Yes. A deposit is a real <b>ETH transfer on Robinhood Chain to the treasury</b>. The server reads the transaction, checks it was sent from your wallet to the treasury address and confirmed, and only then credits your desk.</div></details>
-      <details><summary>How do I get ETH out?</summary><div class="a">Sell coins for ETH on the curve, then <b>Withdraw</b>. Withdrawals enter a queue the treasury pays from a cold wallet, usually within 24 hours, with the payout hash written next to your request.</div></details>
+      <details><summary>Is my SOL actually deposited?</summary><div class="a">Yes. A deposit is a real <b>SOL transfer on Solana to the protocol treasury</b>. Your wallet signs it, the server reads the confirmed transaction, checks it was signed by your wallet and landed in the treasury, and only then credits your desk. If your wallet closed before the credit landed, paste the signature and it is credited.</div></details>
+      <details><summary>How do I get SOL out?</summary><div class="a">Sell coins for SOL on the curve, then <b>Withdraw</b>. Withdrawals enter a queue the treasury pays from a cold wallet, usually within 24 hours, with the payout signature written next to your request.</div></details>
       <details><summary>What is $CEREBRO for?</summary><div class="a">The protocol's share token. The protocol's half of every trade fee and 5% of every seed accrue to it. Holders govern brain parameters, fee splits and which markets are on the tape.</div></details>
-      <details><summary>Which chain and wallet?</summary><div class="a"><b>Robinhood Chain</b> (chainId 4663). Connect any EVM wallet such as MetaMask or Rabby; the site switches the network for you. ETH, the native gas token, is the only asset that moves.</div></details>
+      <details><summary>Which chain and wallet?</summary><div class="a"><b>Solana</b> mainnet. Connect Phantom, Solflare or Backpack. SOL is the only asset that moves: seeds, curves, fees and buybacks are all in SOL, and $CEREBRO is an SPL token.</div></details>
     </div>
   </section>
 
-  <footer><span>CEREBRO · memecoins with a brain · Robinhood Chain · 4663</span><span>cerebropad.xyz · @cerebropad</span></footer>
+  <footer><span>CEREBRO · memecoins with a brain · Solana</span><span>cerebropad.xyz · @cerebropad</span></footer>
 </main>
 
-<div class="modal" id="wmodal"><div class="mcard"><h3>Connect</h3><p>No EVM wallet detected. Paste a Robinhood Chain address to open your desk, or install MetaMask or Rabby to connect directly.</p><div class="field"><input id="waddr" placeholder="0x… Robinhood Chain address" spellcheck="false"></div><button class="btn fill wide" id="wsave">Connect</button></div></div>
+<div class="modal" id="wmodal"><div class="mcard"><h3>Connect</h3><p>No Solana wallet detected. Paste a Solana address to open your desk, or install Phantom to connect directly.</p><div class="field"><input id="waddr" placeholder="Solana address" spellcheck="false"></div><button class="btn fill wide" id="wsave">Connect</button></div></div>
 <div class="toast" id="toast"></div>
 <script src="/client/src/app.js"></script>
 </body>

@@ -1,9 +1,9 @@
 # CEREBRO · X kit
 
-**Handle:** @cerebropad · **Site:** https://cerebropad.xyz · **Chain:** Robinhood Chain (4663) · **Repo:** github.com/PumpLandSOL/cerebro
+**Handle:** @cerebropad · **Site:** https://cerebropad.xyz · **Chain:** Solana · **Repo:** github.com/PumpLandSOL/cerebro
 
 **Name:** CEREBRO
-**Bio:** Memecoins with a brain. Launch a coin, it gets a treasury, a brain and a trading desk. Profits buy the coin back. On Robinhood Chain. $CEREBRO
+**Bio:** Memecoins with a brain. Launch a coin, it gets a treasury, a brain and a trading desk. Profits buy the coin back. On Solana. $CEREBRO
 **PFP:** `brand/cerebro-pfp.png` · **Banner:** `brand/cerebro-banner.png`
 
 ## Assets
@@ -21,7 +21,7 @@ Regenerate: `node _studio/kit.js && node _studio/render.js`.
 
 **1 · Launch (pin)** · `cerebro-keyart.png`
 ```
-CEREBRO is live on Robinhood Chain.
+CEREBRO is live on Solana.
 
 Launch a coin and it gets a treasury, a brain and a trading desk.
 
@@ -35,7 +35,7 @@ cerebropad.xyz
 ```
 How a coin gets a brain:
 
-01 Launch: seed ETH becomes the agent treasury
+01 Launch: seed SOL becomes the agent treasury
 02 Earn: half of every 1% trade fee goes to the agent
 03 Trade: the brain works the live tape every 5s
 04 Fund itself: new highs buy the coin back
@@ -49,7 +49,7 @@ Six brains. Pick one at launch.
 
 Momentum. Mean reversion. Trend. Degen. Hedge. Vol hunter.
 
-Each is a strategy over HOOD, TSLA, NVDA, SPY, BTC, ETH, SOL and more. Every decision is logged with its reasoning.
+Each is a strategy over SOL, BTC, ETH, DOGE, TSLA, NVDA, SPY and more. Every decision is logged with its reasoning.
 
 Or let the ward rank them.
 ```
@@ -78,5 +78,5 @@ $CEREBRO · CA soon
 
 **Reply under 1**
 ```
-Agents trade real prices with real stops and can lose. A treasury below its high-water mark makes no buybacks until it recovers. Deposits are USDG verified on-chain; withdrawals are paid from a cold wallet.
+Agents trade real prices with real stops and can lose. A treasury below its high-water mark makes no buybacks until it recovers. Deposits are SOL verified on-chain; withdrawals are paid from a cold wallet.
 ```
