@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CEREBRO Docs — how a coin gets a brain</title>
+<meta name="description" content="Technical documentation for CEREBRO on Solana: launch, bonding curve, fees, the agent loop, the six brains, buybacks, SOL deposits and withdrawals, parameters and the HTTP API.">
+<meta property="og:url" content="https://cerebropad.xyz/docs"><link rel="canonical" href="https://cerebropad.xyz/docs"><meta property="og:title" content="CEREBRO Docs"><meta property="og:description" content="Launch, curve, fees, agent loop, brains, buybacks, deposits, parameters, API."><meta property="og:image" content="https://cerebropad.xyz/brand/cerebro-keyart.png"><meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Michroma&family=Sora:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--void:#07060c;--hull:#0c0a14;--hull2:#120f1d;--edge:#221c33;--edge2:#2e2646;--ink:#f1eefa;--dim:#b3aac9;--mut:#776e8f;--a:#14f195;--b:#9945ff;--c:#dc1fff;--iri:linear-gradient(100deg,var(--a),var(--b) 50%,var(--c))}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Sora',sans-serif;font-weight:300;background:var(--void);color:var(--ink);font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:var(--a);text-decoration:none}a:hover{text-decoration:underline}
+.amb{position:fixed;inset:-20%;z-index:-2;filter:blur(90px);opacity:.26;background:radial-gradient(38% 34% at 22% 30%,var(--b),transparent 70%),radial-gradient(30% 30% at 78% 22%,var(--a),transparent 70%),radial-gradient(34% 36% at 62% 84%,var(--c),transparent 70%)}
+.scan{position:fixed;inset:0;z-index:-1;pointer-events:none;background:repeating-linear-gradient(0deg,#ffffff05 0 1px,transparent 1px 4px)}
+header{position:sticky;top:0;z-index:40;background:#07060ccc;backdrop-filter:blur(18px);border-bottom:1px solid var(--edge)}
+.hin{max-width:1180px;margin:0 auto;padding:0 20px;height:60px;display:flex;align-items:center;gap:16px}
+.logo{display:flex;align-items:center;gap:11px;font-family:'Michroma';font-size:16px;letter-spacing:.32em;color:var(--ink)}
+.logo i{width:26px;height:26px;border-radius:50%;position:relative;display:block;background:conic-gradient(from 0deg,var(--a),var(--b),var(--c),var(--a))}
+.logo i::before{content:"";position:absolute;inset:6px;border-radius:50%;background:var(--void)}.logo i::after{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--iri)}
+.hin nav{display:flex;gap:2px;margin-left:14px}.hin nav a{font-size:13px;color:var(--mut);padding:8px 12px}.hin nav a.on{color:var(--ink)}
+.hin .r{margin-left:auto;font-family:'Michroma';font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--mut)}
+.wrap{max-width:1180px;margin:0 auto;padding:40px 20px 80px;display:grid;grid-template-columns:230px 1fr;gap:48px}
+aside{position:sticky;top:80px;align-self:start}
+aside .lab{font-family:'Michroma';font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--mut);margin-bottom:10px}
+aside a{display:block;color:var(--dim);font-size:13.5px;padding:5px 0;border-left:2px solid var(--edge);padding-left:12px}aside a:hover{color:var(--ink);text-decoration:none;border-color:var(--a)}
+.lab{font-family:'Michroma';font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--mut)}
+h1{font-family:'Michroma';font-weight:400;font-size:34px;line-height:1.2;letter-spacing:.02em;margin:8px 0 12px}
+h1 em{font-style:normal;background:var(--iri);-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-family:'Michroma';font-weight:400;font-size:17px;letter-spacing:.08em;text-transform:uppercase;margin:54px 0 14px;padding-top:22px;border-top:1px solid var(--edge)}
+h3{font-weight:500;font-size:15px;margin:22px 0 6px;color:var(--ink)}
+p{color:var(--dim);margin:0 0 12px;max-width:760px}p b{color:var(--ink);font-weight:500}
+ul,ol{color:var(--dim);margin:0 0 12px 22px;max-width:740px}li{margin:4px 0}
+code{font-family:'JetBrains Mono',monospace;font-size:12.5px;background:var(--hull2);border:1px solid var(--edge);padding:1px 6px;border-radius:5px;color:var(--ink)}
+pre{font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.6;background:var(--hull);border:1px solid var(--edge);padding:14px 16px;border-radius:0;clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px);overflow:auto;margin:10px 0 18px;color:var(--ink);max-width:760px}
+pre code{background:none;border:none;padding:0}
+.k{color:var(--a)}.v{color:var(--c)}.m{color:var(--mut)}
+table{border-collapse:collapse;width:100%;max-width:760px;font-size:13.5px;margin:10px 0 18px}th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--edge);vertical-align:top}th{font-family:'Michroma';font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);font-weight:400}td:first-child{font-family:'JetBrains Mono';font-size:12.5px;color:var(--ink);white-space:nowrap}td{color:var(--dim)}
+.card{background:var(--hull);border:1px solid var(--edge);padding:16px 18px;clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);margin:12px 0 18px;max-width:760px}
+.card b{display:block;font-family:'Michroma';font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--a);margin-bottom:6px}
+.brains{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:760px;margin:12px 0 18px}
+.brain{background:var(--hull);border:1px solid var(--edge);padding:14px 16px;clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+.brain b{display:flex;align-items:center;gap:9px;font-weight:500;color:var(--ink)}.brain b i{width:9px;height:9px;border-radius:50%;display:inline-block}.brain p{font-size:13px;margin:6px 0 0}
+footer{border-top:1px solid var(--edge);padding:22px 20px;font-family:'Michroma';font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--mut);display:flex;justify-content:space-between;max-width:1180px;margin:0 auto}
+@media(max-width:860px){.wrap{grid-template-columns:1fr;gap:20px}aside{position:static;display:flex;flex-wrap:wrap;gap:4px 12px}aside .lab{width:100%}aside a{border:none;padding:2px 0}.brains{grid-template-columns:1fr}.hin nav{display:none}h1{font-size:26px}}
+</style>
+</head>
+<body>
+<div class="amb"></div><div class="scan"></div>
+<header><div class="hin"><a class="logo" href="/"><i></i>CEREBRO</a><nav><a href="/">Ward</a><a href="/#launch">Launch</a><a href="/#desk">My desk</a><a href="/#how">How it works</a><a class="on" href="/docs">Docs</a></nav><span class="r">Docs · Solana</span></div></header>
+
+<div class="wrap">
+<aside>
+  <div class="lab">Contents</div>
+  <a href="#overview">Overview</a><a href="#launch">Launching a coin</a><a href="#curve">The bonding curve</a><a href="#fees">Fees</a><a href="#agent">The agent loop</a><a href="#brains">The six brains</a><a href="#buyback">Buybacks</a><a href="#deposits">SOL deposits</a><a href="#withdrawals">Withdrawals</a><a href="#ward">The ward</a><a href="#params">Parameters</a><a href="#api">HTTP API</a><a href="#token">$CEREBRO</a><a href="#risk">What can go wrong</a>
+</aside>
+
+<main>
+<div class="lab">Documentation</div>
+<h1>How a coin gets <em>a brain.</em></h1>
+<p>CEREBRO is a launchpad on Solana. Every coin launched here is born with an <b>agent</b>: a treasury seeded in SOL at launch, a <b>brain</b> that trades tokenized stocks and crypto on the live tape, and one rule that never changes: <b>profits buy the coin back</b>. This page documents exactly how each part works, with the numbers.</p>
+
+<h2 id="overview">Overview</h2>
+<p>Three things exist for every coin:</p>
+<ul>
+  <li><b>The coin.</b> One billion units on a constant-product bonding curve priced in SOL. The curve is the only market for the coin.</li>
+  <li><b>The agent treasury.</b> A SOL cash balance plus open positions. It starts as your seed (minus the protocol share) and grows or shrinks with the agent's trading and with fees from the coin's own trades.</li>
+  <li><b>The brain.</b> A deterministic strategy chosen at launch. Every few seconds it reads the tape, decides a target book and moves the treasury toward it. Every decision is written down with its reasoning.</li>
+</ul>
+<p>The loop closes when the agent's cash rises above its previous high-water mark: half of the new profit buys the coin on the curve. Trading skill becomes buy pressure. Nothing here is a projection or a score; the treasury, the positions and the buybacks are ledger entries you can read on the coin page.</p>
+
+<h2 id="launch">Launching a coin</h2>
+<p>You need a connected Solana wallet with SOL on your desk. Then:</p>
+<ol>
+  <li>Choose a <b>name</b> (2–32 characters) and a <b>ticker</b> (2–8 characters, letters and digits, unique across the ward).</li>
+  <li>Pick a <b>brain</b> from the six below.</li>
+  <li>Set a <b>seed</b> in SOL. Minimum <code>0.2 SOL</code>.</li>
+</ol>
+<p>At launch, <b>5%</b> of the seed goes to the protocol and the remaining <b>95%</b> becomes the agent's cash and its first high-water mark. The coin lists on the curve at the starting price and the agent takes its first look at the tape immediately.</p>
+<div class="card"><b>Example</b>Seed 2 SOL → protocol 0.1 SOL, agent treasury 1.9 SOL. High-water mark 1.9 SOL. The coin opens at 0.2 SOL / 1,000,000,000 = 2.0e-10 SOL per unit.</div>
+
+<h2 id="curve">The bonding curve</h2>
+<p>Each coin has two virtual reserves: <code>R</code> (SOL) and <code>S</code> (coins). They start at <code>R₀ = 0.2 SOL</code> and <code>S₀ = 1,000,000,000</code>. The invariant <code>k = R × S</code> is preserved on every trade.</p>
+<pre><code><span class="m">// price</span>
+price = R / S
+
+<span class="m">// buy with x SOL (after fee)</span>
+R' = R + x
+coins_out = S − k / R'
+S' = S − coins_out
+
+<span class="m">// sell q coins</span>
+S' = S + q
+sol_out = R − k / S'
+R' = R − sol_out</code></pre>
+<p>Buying raises the price, selling lowers it, and the curve has no order book and no counterparty. Because <code>R</code> never falls below <code>R₀</code> through trading alone, the curve always has SOL to pay a sell. "Reserve" on the coin page is <code>R − R₀</code>, the real SOL sitting in the curve. Market cap is <code>price × 1,000,000,000</code>.</p>
+
+<h2 id="fees">Fees</h2>
+<table><tr><th>Event</th><th>Fee</th><th>Where it goes</th></tr>
+<tr><td>Launch</td><td>5% of the seed</td><td>Protocol</td></tr>
+<tr><td>Coin buy</td><td>1% of the SOL in</td><td>½ agent treasury (cash) · ½ protocol</td></tr>
+<tr><td>Coin sell</td><td>1% of the SOL out</td><td>½ agent treasury (cash) · ½ protocol</td></tr>
+<tr><td>Deposit / withdraw</td><td>none</td><td>Solana network fee only</td></tr></table>
+<p>The agent's half of the trade fee is shown as <b>fees earned</b> on the coin page. It is real cash the brain can trade with, so a coin that trades a lot funds a bigger desk. Fees do not count as profit for buyback purposes until the brain turns them into a new high-water mark.</p>
+
+<h2 id="agent">The agent loop</h2>
+<p>Every <code>5 seconds</code> each agent runs one tick:</p>
+<ol>
+  <li><b>Read the tape.</b> Eleven markets with live prices: SOL, BTC, ETH, DOGE, TSLA, NVDA, AAPL, SPY, COIN, MSTR, GLD. For each the agent sees the price, the 24-hour, 5-day and 30-day change, and realised volatility. A market whose last print is older than 15 minutes counts as closed and is ignored.</li>
+  <li><b>Ask the brain.</b> The brain returns a target book: a weight from −1 to +1 for each market, as a share of the treasury's equity. Positive is long, negative is short.</li>
+  <li><b>Manage positions.</b> Every open position is marked at the live price. A position is closed if the brain flipped direction on it, if it is up <b>+12%</b> (take profit) or if it is down <b>−8%</b> (stop). Realised P&amp;L moves cash.</li>
+  <li><b>Open toward the book.</b> For each market the brain wants and the agent does not hold, it opens a position sized <code>min(cash × 0.95, |weight| × equity)</code>, never more than <b>35%</b> of equity in one name. Positions are notional exposures priced off the tape; they never touch the coin's curve.</li>
+  <li><b>Write it down.</b> Whenever it acts (or every 20 minutes when idle) the agent records a thought: the brain's own sentence explaining the book, with the equity at that moment.</li>
+  <li><b>Fund itself.</b> If cash now exceeds the high-water mark, run a buyback (next section).</li>
+</ol>
+<p>Equity is <code>cash + Σ(notional + unrealised P&amp;L)</code>. The ward ranks agents by <code>equity / seed</code>.</p>
+
+<h2 id="brains">The six brains</h2>
+<p>Each brain is a pure function of the tape. Same tape, same answer, every time. The sentence it prints is the reasoning it actually used.</p>
+<div class="brains">
+  <div class="brain"><b><i style="background:#14f195"></i>Momentum</b><p>Ranks markets by 5-day change. Longs the top three (35%, 26%, 18% of equity), shorts the bottom two at half size. Rides winners, cuts losers.</p></div>
+  <div class="brain"><b><i style="background:#9945ff"></i>Mean reversion</b><p>Ranks by 24-hour change, inverted. Longs the three biggest dips, shorts the single hottest name at 14%. Bets on the rubber band.</p></div>
+  <div class="brain"><b><i style="background:#c7b3ff"></i>Trend</b><p>Only holds names more than 2% above their 30-day open, up to four, equal weight. If nothing qualifies it sits in cash. Patient, rarely trades.</p></div>
+  <div class="brain"><b><i style="background:#ffb36b"></i>Degen</b><p>Crypto only: SOL, BTC, ETH. Full 35% size in each, direction is the sign of the 24-hour move. Flips whenever the day flips.</p></div>
+  <div class="brain"><b><i style="background:#ffe27b"></i>Hedge</b><p>Long the two strongest 5-day names, short the two weakest, 17.5% each. Net exposure zero. Sleeps well.</p></div>
+  <div class="brain"><b><i style="background:#5ad8ff"></i>Vol hunter</b><p>Picks the five most volatile markets and takes 14% positions in the direction of the day. Small size, many names.</p></div>
+</div>
+
+<h2 id="buyback">Buybacks</h2>
+<p>The agent keeps a <b>high-water mark</b>: the highest cash balance it has ever held. After every tick, if cash is above the mark by more than <code>0.004 SOL</code>:</p>
+<pre><code>gain   = cash − hwm
+spend  = gain × 0.5
+cash  -= spend
+coins  = buyOnCurve(spend)      <span class="m">// moves the price up like any buy</span>
+hwm    = cash                   <span class="m">// the new mark is the cash left after the buy</span></code></pre>
+<p>Bought-back coins sit in the agent's treasury and are shown on the coin page as <b>coins bought back</b>. They are never sold by the agent. A treasury below its mark makes no buybacks until it earns its way back above it. Every buyback appears in the coin's desk log and in the ward log.</p>
+
+<h2 id="deposits">SOL deposits</h2>
+<p>Your desk balance is SOL you have deposited into the protocol treasury on Solana mainnet. There is nothing to approve and no token to wrap.</p>
+<ol>
+  <li>Connect Phantom, Solflare or Backpack and enter an amount on <b>My desk</b>. Minimum <code>0.1 SOL</code>.</li>
+  <li>Your wallet builds a plain System Program transfer to the protocol treasury and asks you to sign it. The destination and a fresh blockhash are fetched only at that moment; the treasury address is not published on the site.</li>
+  <li>The server reads the confirmed transaction with <code>getTransaction</code>, checks that it was <b>signed by your wallet</b> and that the treasury's balance <b>rose by at least the minimum</b>, and credits your desk with the exact amount received.</li>
+</ol>
+<p>Every transaction signature is credited at most once. If your wallet closed before the credit landed, paste the signature into <b>Credit my deposit</b> and the same check runs. Transfers below the minimum are not credited.</p>
+
+<h2 id="withdrawals">Withdrawals</h2>
+<p>Sell coins for SOL on the curve, then queue a withdrawal from <b>My desk</b> (minimum <code>0.02 SOL</code>). The amount leaves your desk balance immediately and joins a queue that is paid by hand from a cold wallet, normally within 24 hours. There is no hot key on the server. When paid, the payout signature is written next to your request so you can verify it on any Solana explorer.</p>
+
+<h2 id="ward">The ward</h2>
+<p>The home page is the ward: every agent, live. The monitor draws each agent's equity normalised to seed = 100 so brains can be compared regardless of size. Cards are ranked by equity growth since seed and each shows the agent's latest thought. The ward log records launches and buybacks across all coins. Each coin page shows the full record: equity and price charts, thoughts, open positions with live P&amp;L, the desk log of every open, close and buyback, win rate, fees earned and coins bought back.</p>
+
+<h2 id="params">Parameters</h2>
+<table><tr><th>Parameter</th><th>Value</th><th>Meaning</th></tr>
+<tr><td>TICK_SEC</td><td>5 s</td><td>Agent decision cadence</td></tr>
+<tr><td>LAUNCH_MIN</td><td>0.2 SOL</td><td>Minimum seed</td></tr>
+<tr><td>LAUNCH_FEE</td><td>5%</td><td>Share of the seed to the protocol</td></tr>
+<tr><td>TRADE_FEE</td><td>1%</td><td>On every coin buy and sell, split half agent / half protocol</td></tr>
+<tr><td>AGENT_MAX_POS</td><td>35%</td><td>Maximum share of equity in one market</td></tr>
+<tr><td>Take profit / stop</td><td>+12% / −8%</td><td>Per position, on the move since entry</td></tr>
+<tr><td>BUYBACK_SHARE</td><td>50%</td><td>Share of profit above the high-water mark spent on buybacks</td></tr>
+<tr><td>CURVE_V</td><td>0.2 SOL</td><td>Virtual SOL reserve at launch</td></tr>
+<tr><td>CURVE_SUPPLY</td><td>1,000,000,000</td><td>Coins on the curve</td></tr>
+<tr><td>MIN_DEPOSIT</td><td>0.1 SOL</td><td>Smallest credited deposit</td></tr>
+<tr><td>Min buy / withdraw</td><td>0.005 / 0.02 SOL</td><td>Per transaction</td></tr>
+<tr><td>Tape staleness</td><td>15 min</td><td>Older prints count as a closed market</td></tr></table>
+
+<h2 id="api">HTTP API</h2>
+<p>Everything the site shows comes from this API. All POST bodies are JSON; wallet-scoped calls include <code>wallet</code> (a base58 Solana address).</p>
+<table><tr><th>Route</th><th>Body</th><th>Returns</th></tr>
+<tr><td>GET /api/state</td><td>—</td><td>Ward: brains, tape, ranked coins, protocol totals, ward log, chain slot, whether deposits are open</td></tr>
+<tr><td>GET /api/coin/:id</td><td>—</td><td>Full coin view: agent, thoughts, log, positions, trades, curve history</td></tr>
+<tr><td>POST /api/account</td><td>wallet</td><td>Desk: SOL, deposited, holdings, launches, history, withdrawal queue</td></tr>
+<tr><td>POST /api/launch</td><td>wallet, name, ticker, brain, seed</td><td>The new coin and your desk</td></tr>
+<tr><td>POST /api/buy</td><td>wallet, id, amount (SOL)</td><td>Coins received, coin view, desk</td></tr>
+<tr><td>POST /api/sell</td><td>wallet, id, amount (coins)</td><td>SOL received, coin view, desk</td></tr>
+<tr><td>POST /api/deposit/intent</td><td>wallet</td><td>Transfer destination and a fresh blockhash for the wallet to build the transaction</td></tr>
+<tr><td>POST /api/deposit</td><td>wallet, tx (signature)</td><td>Amount credited after on-chain verification</td></tr>
+<tr><td>POST /api/withdraw</td><td>wallet, amount</td><td>Queued withdrawal</td></tr></table>
+<pre><code><span class="m">// launch from the command line</span>
+curl -X POST https://cerebropad.xyz/api/launch \
+  -H <span class="v">'content-type: application/json'</span> \
+  -d <span class="v">'{"wallet":"YOUR_SOLANA_ADDRESS","name":"Brainy","ticker":"BRN","brain":"MOMENTUM","seed":0.5}'</span></code></pre>
+<p>Brain ids: <code>MOMENTUM</code> <code>REVERSION</code> <code>TREND</code> <code>DEGEN</code> <code>HEDGE</code> <code>VOLHUNT</code>. Coin pages live at <code>/c/&lt;id&gt;</code>.</p>
+
+<h2 id="token">$CEREBRO</h2>
+<p>$CEREBRO is the protocol's share token on Solana. The protocol's half of every trade fee and the 5% of every seed accrue to it. Holders govern brain parameters, fee splits and which markets are on the tape. The contract address is shown at the top of the ward once the token is live.</p>
+
+<h2 id="risk">What can go wrong</h2>
+<ul>
+  <li><b>Agents lose.</b> They trade real prices with real stops. A losing streak shrinks the treasury and stops buybacks until it recovers. The ward exists to show which brains are working and which are not.</li>
+  <li><b>Curves are thin at launch.</b> A new coin's price moves a lot on small SOL amounts. That is what a bonding curve is.</li>
+  <li><b>Closed markets.</b> Stocks only print during US hours. Brains that lean on stocks trade less overnight and at weekends; Degen does not care.</li>
+  <li><b>Withdrawals are manual.</b> They are paid from a cold wallet by a person, normally within 24 hours, never instantly.</li>
+</ul>
+<p style="margin-top:30px"><a href="/">← Back to the ward</a></p>
+</main>
+</div>
+<footer><span>CEREBRO · memecoins with a brain · Solana</span><span>cerebropad.xyz · @cerebropad</span></footer>
+</body>
+</html>

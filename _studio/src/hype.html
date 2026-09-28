@@ -1,0 +1,35 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="_base.css">
+<style>body{width:1280px;height:720px}.c{position:absolute;inset:0;display:grid;place-items:center;text-align:center;opacity:0}
+.h{font-family:Michroma;font-weight:400;font-size:64px;line-height:1.15;text-transform:uppercase;letter-spacing:.02em}
+.sub{font-family:Sora;font-weight:300;font-size:26px;color:#b3aac9;margin-top:22px;letter-spacing:.04em}
+#mon{position:absolute;left:90px;top:120px;width:1100px;height:480px;border:1px solid #2e2646;background:#0c0a14cc;clip-path:polygon(24px 0,100% 0,100% calc(100% - 24px),calc(100% - 24px) 100%,0 100%,0 24px)}
+#mon .t{position:absolute;left:30px;top:22px;font-family:Michroma;font-size:13px;letter-spacing:.3em;color:#776e8f}
+#mon canvas{position:absolute;left:0;top:60px;width:1100px;height:380px}
+#leg{position:absolute;left:30px;bottom:18px;display:flex;gap:26px;font-family:Sora;font-size:16px;color:#b3aac9}#leg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px}
+#bb{position:absolute;right:30px;top:22px;font-family:Michroma;font-size:13px;letter-spacing:.3em;color:#14f195}
+.big{font-family:Michroma;font-size:150px;line-height:1;background:linear-gradient(100deg,#14f195,#9945ff 50%,#dc1fff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.logo{display:flex;align-items:center;gap:22px;font-family:Michroma;font-size:70px;letter-spacing:.32em;justify-content:center}
+.pill{display:inline-block;padding:10px 26px;border:1px solid #2e2646;font-family:Michroma;font-size:20px;letter-spacing:.2em;color:#f1eefa;clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+</style><body><div class="amb" id="amb"></div><div class="scan"></div>
+<div class="c" id="s1"><div><div class="h">Every memecoin<br>is <span class="iri">brainless.</span></div></div></div>
+<div class="c" id="s2"><div><div class="h">Give yours a <span class="iri">treasury,</span><br>a brain and a desk.</div></div></div>
+<div class="c" id="s3"><div id="mon"><div class="t">WARD · LIVE EQUITY · ALL AGENTS</div><div id="bb">BUYBACK · 0.000 SOL</div><canvas id="cv" width="1100" height="380"></canvas><div id="leg"></div></div></div>
+<div class="c" id="s4"><div><div class="big" id="pct">+0.0%</div><div class="sub">PROFIT BUYS THE COIN BACK. EVERY NEW HIGH.</div></div></div>
+<div class="c" id="s5"><div><div class="logo"><svg viewBox="0 0 40 40" style="width:70px"><defs><linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="#14f195"/><stop offset="1" stop-color="#dc1fff"/></linearGradient></defs><circle cx="20" cy="20" r="18" fill="none" stroke="url(#lg)" stroke-width="3"/><circle cx="20" cy="20" r="9" fill="url(#lg)"/><path d="M20 2v6M20 32v6M2 20h6M32 20h6" stroke="#f1eefa" stroke-width="2" stroke-linecap="round"/></svg>CEREBRO</div><div class="sub" style="margin-top:14px">MEMECOINS WITH A BRAIN · NOW ON SOLANA</div><div style="margin-top:34px"><span class="pill">cerebropad.xyz</span><span style="margin-left:22px;font-family:Sora;font-size:22px;color:#776e8f">@cerebropad</span></div></div></div>
+<script>
+const $=(i)=>document.getElementById(i),cl=(x)=>Math.max(0,Math.min(1,x)),e=(x)=>1-Math.pow(1-cl(x),3),win=(t,a,b,f=.22)=>cl((t-a)/f)*cl((b-t)/f);
+const AG=[['BRN','Momentum','#14f195',1.3],['DIP','Reversion','#9945ff',2.9],['TRND','Trend','#c7b3ff',4.1],['DGN','Degen','#ffb36b',5.6],['HDG','Hedge','#ffe27b',7.2],['VOL','Vol hunter','#5ad8ff',8.4]];
+$('leg').innerHTML=AG.map((a)=>`<span><i style="background:${a[2]}"></i>${a[0]} · ${a[1]}</span>`).join('');
+const path=(seed,n)=>{const p=[];let y=100;for(let i=0;i<=n;i++){y+=(Math.sin(i/9+seed)*.6+Math.sin(i/23+seed*2)*.4)*1.6+ .18;p.push(y);}return p;};
+const P=AG.map((a)=>path(a[3],120));
+function draw(prog){const g=$('cv').getContext('2d');g.clearRect(0,0,1100,380);const lo=88,hi=132;g.setLineDash([3,5]);g.strokeStyle='#2e2646';g.beginPath();const y0=380-(100-lo)/(hi-lo)*380;g.moveTo(0,y0);g.lineTo(1100,y0);g.stroke();g.setLineDash([]);
+ AG.forEach((a,i)=>{const n=Math.floor(prog*120);g.strokeStyle=a[2];g.lineWidth=2.2;g.shadowColor=a[2];g.shadowBlur=10;g.beginPath();for(let k=0;k<=n;k++){const x=k/120*1080+10,y=380-(P[i][k]-lo)/(hi-lo)*380;k?g.lineTo(x,y):g.moveTo(x,y);}g.stroke();g.shadowBlur=0;if(n>0){const x=n/120*1080+10,y=380-(P[i][n]-lo)/(hi-lo)*380;g.fillStyle=a[2];g.beginPath();g.arc(x,y,3.5,0,7);g.fill();}});}
+window.__seek=(t)=>{
+  $('amb').style.transform=`rotate(${t*4}deg) scale(${1+t*.02})`;
+  $('s1').style.opacity=win(t,0,1.9);$('s1').firstElementChild.style.transform=`translateY(${(1-e(t/.6))*30}px)`;
+  $('s2').style.opacity=win(t,1.8,3.7);$('s2').firstElementChild.style.transform=`scale(${.94+e((t-1.8)/.7)*.06})`;
+  $('s3').style.opacity=win(t,3.6,6.9);const p=e((t-3.8)/2.6);draw(p);$('bb').textContent='BUYBACK · '+(p*0.418).toFixed(3)+' SOL';
+  $('s4').style.opacity=win(t,6.8,8.4);$('pct').textContent='+'+(e((t-6.9)/1)*38.4).toFixed(1)+'%';
+  $('s5').style.opacity=e((t-8.3)/.5);$('s5').firstElementChild.style.transform=`scale(${.9+e((t-8.3)/.8)*.1})`;
+};window.__seek(0);
+</script>

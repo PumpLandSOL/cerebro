@@ -1,0 +1,34 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="_base.css">
+<style>body{width:1280px;height:720px}
+#stage{position:absolute;left:50px;top:30px;width:1180px;height:590px;overflow:hidden;border:1px solid #2e2646;background:#0c0a14;clip-path:polygon(18px 0,100% 0,100% calc(100% - 18px),calc(100% - 18px) 100%,0 100%,0 18px)}
+#stage img{position:absolute;left:0;top:0;width:1180px;height:705px;transform-origin:0 0}
+#cap{position:absolute;left:50px;right:50px;top:640px;display:flex;align-items:baseline;gap:18px}
+#n{font-family:Michroma;font-size:12px;color:#776e8f;letter-spacing:.24em;white-space:nowrap}#ct{font-family:Sora;font-size:25px;font-weight:500}
+#prog{position:absolute;left:0;bottom:0;height:3px;background:linear-gradient(90deg,#14f195,#9945ff,#dc1fff)}
+.full{position:absolute;inset:0;display:grid;place-items:center;text-align:center;background:#07060c}
+.logo{display:flex;align-items:center;gap:20px;font-family:Michroma;font-size:62px;letter-spacing:.32em;justify-content:center}
+.pill{display:inline-block;padding:10px 26px;border:1px solid #2e2646;font-family:Michroma;font-size:20px;letter-spacing:.2em;color:#f1eefa;clip-path:polygon(12px 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%,0 12px)}
+.sub{font-family:Sora;font-weight:300;font-size:22px;color:#b3aac9;letter-spacing:.06em}
+</style><body><div class="amb"></div><div class="scan"></div>
+<div id="stage"></div><div id="cap"><span id="n"></span><span id="ct"></span></div><div id="prog"></div>
+<div class="full" id="intro"><div><div class="logo"><svg viewBox="0 0 40 40" style="width:62px"><defs><linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="#14f195"/><stop offset="1" stop-color="#dc1fff"/></linearGradient></defs><circle cx="20" cy="20" r="18" fill="none" stroke="url(#lg)" stroke-width="3"/><circle cx="20" cy="20" r="9" fill="url(#lg)"/><path d="M20 2v6M20 32v6M2 20h6M32 20h6" stroke="#f1eefa" stroke-width="2" stroke-linecap="round"/></svg>CEREBRO</div><div class="sub" style="margin-top:16px">MEMECOINS WITH A BRAIN · SOLANA</div></div></div>
+<div class="full" id="outro"><div><div style="font-family:Michroma;font-size:36px;line-height:1.3">Launch. Earn. Trade. <span class="iri">Fund itself.</span></div><div style="margin-top:26px"><span class="pill">cerebropad.xyz</span><span style="margin-left:22px;font-family:Sora;font-size:22px;color:#776e8f">@cerebropad</span></div></div></div>
+<script>
+const $=(i)=>document.getElementById(i),cl=(x)=>Math.max(0,Math.min(1,x)),e=(x)=>{x=cl(x);return x*x*(3-2*x)};
+const S=[[1.5,'01-ward','The ward: every agent, live equity, ranked since seed',[1,.5,.5]],
+[4,'02-agents','Six brains at work. Each card is a coin with its own treasury',[1.3,.5,.45]],
+[6.6,'03-coin','A coin page: equity, buybacks, and what the brain is thinking',[1.25,.35,.4]],
+[9.2,'04-coin-log','Open positions with live P&L, every open and close with the reason',[1.3,.5,.5]],
+[11.8,'05-launch','Launch: name, ticker, pick a brain, seed SOL. 95% becomes the treasury',[1.25,.45,.4]],
+[14.4,'06-desk','Deposit SOL from Phantom. Verified on Solana before it is credited',[1.3,.35,.45]],
+[16.8,'07-docs','Every number documented, from the curve math to the buyback rule',[1.2,.5,.3]],[19.2]];
+const END=19.2,DUR=21;
+S.slice(0,-1).forEach((s,i)=>{const im=new Image();im.src='../shots/'+s[1]+'.png';im.id='i'+i;$('stage').appendChild(im);});
+const tf=(z,p)=>{const s=1+(z[0]-1)*p;const fx=z[1]*1180,fy=z[2]*705;let x=590-fx*s,y=295-fy*s;x=Math.min(0,Math.max(1180-1180*s,x));y=Math.min(0,Math.max(590-705*s,y));return `translate(${x}px,${y}px) scale(${s})`;};
+window.__seek=(t)=>{
+  $('intro').style.opacity=1-e((t-1.1)/.4);$('outro').style.opacity=e((t-END)/.4);$('prog').style.width=(t/DUR*1280)+'px';
+  let k=0;for(let i=0;i<S.length-1;i++)if(t>=S[i][0])k=i;
+  S.slice(0,-1).forEach((s,i)=>{const im=$('i'+i);im.style.opacity=i<=k?e((t-s[0])/.35):0;im.style.zIndex=i;const len=S[i+1][0]-s[0];im.style.transform=tf(s[3],e((t-s[0]-.15)/(len*.55)));});
+  $('n').textContent=String(k+1).padStart(2,'0')+' / 07';$('ct').textContent=S[k][2];$('cap').style.opacity=e((t-S[k][0])/.3)*(t<END?1:0);
+};window.__ready=Promise.all([...document.images].map((i)=>i.decode().catch(()=>0)));window.__seek(0);
+</script>
