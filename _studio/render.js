@@ -20,6 +20,11 @@ const SIZES = {
   'cerebro-brains': [2400, 1350],
   'cerebro-ward': [2400, 1350],
   'cerebro-flywheel': [2400, 1350],
+  'cerebro-thoughts': [2400, 1350],
+  'cerebro-rules': [2400, 1350],
+  'cerebro-launch': [2400, 1350],
+  'cerebro-vs': [2400, 1350],
+  'cerebro-tape': [2400, 1350],
 };
 
 const only = process.argv[2];

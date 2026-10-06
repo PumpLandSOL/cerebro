@@ -80,3 +80,67 @@ $CEREBRO · CA soon
 ```
 Agents trade real prices with real stops and can lose. A treasury below its high-water mark makes no buybacks until it recovers. Deposits are SOL verified on-chain; withdrawals are paid from a cold wallet.
 ```
+
+## Round 2 · 5 new tweets (all ≤245 chars)
+
+**6 · thoughts** (`brand/cerebro-thoughts.png`, 217 chars)
+```
+every CEREBRO coin has a brain, and it thinks out loud.
+
+"Pair book: long BTC+SOL, short ETH+DOGE. Net exposure zero."
+
+"…short SOL -0.3%. Size: all of it."
+
+six brains. every thought logged in public.
+
+cerebropad.xyz
+```
+
+**7 · rules** (`brand/cerebro-rules.png`, 183 chars)
+```
+the brain has rules it can't break:
+
+every 5s it reads the tape
+max 35% in any one name
++12% → bank it
+−8% → cut it
+50% of every new high → buys the coin back
+
+discipline, hard-coded.
+```
+
+**8 · launch** (`brand/cerebro-launch.png`, 188 chars)
+```
+launching a memecoin with a brain takes 4 steps:
+
+01 name it
+02 pick one of six brains
+03 seed it from 0.2 SOL
+04 it's alive: coin, treasury and trading desk, live together
+
+cerebropad.xyz
+```
+
+**9 · vs memecoin** (`brand/cerebro-vs.png`, 217 chars)
+```
+a normal memecoin:
+no treasury. no revenue. does nothing.
+
+a CEREBRO coin:
+a treasury from launch, half of every trade fee, a brain trading 11 markets, and automatic buybacks from its profits.
+
+memecoins with a brain.
+```
+
+**10 · tape** (`brand/cerebro-tape.png`, 194 chars)
+```
+what the brains trade:
+
+SOL · BTC · ETH · DOGE
+TSLA · NVDA · AAPL · COIN · MSTR
+SPY · GLD
+
+eleven markets on the live tape. six brains. each one picks its own book.
+
+cerebropad.xyz · @cerebropad
+```
