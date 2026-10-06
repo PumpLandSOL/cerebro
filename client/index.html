@@ -275,7 +275,7 @@ footer{margin-top:50px;border-top:1px solid var(--edge);padding-top:16px;font-si
   <footer><span>CEREBRO · memecoins with a brain · Solana</span><span><a href="/docs" style="text-decoration:none">Docs</a> · cerebropad.xyz · @cerebropad</span></footer>
 </main>
 
-<div class="modal" id="wmodal"><div class="mcard"><h3>Connect</h3><p>No Solana wallet detected. Paste a Solana address to open your desk, or install Phantom to connect directly.</p><div class="field"><input id="waddr" placeholder="Solana address" spellcheck="false"></div><button class="btn fill wide" id="wsave">Connect</button></div></div>
+<div class="modal" id="wmodal"><div class="mcard"><h3>Connect</h3><p>No Solana wallet in this browser. Open CEREBRO inside Phantom to connect, or paste an address to view a desk (read-only).</p><a class="btn fill wide" id="phantomLink" style="display:block;text-align:center;margin:12px 0" href="#">Open in Phantom</a><script>(function(){var u=location.href;document.getElementById('phantomLink').href='https://phantom.app/ul/browse/'+encodeURIComponent(u)+'?ref='+encodeURIComponent(location.origin);})();</script><div class="field"><input id="waddr" placeholder="Solana address" spellcheck="false"></div><button class="btn fill wide" id="wsave">Connect</button></div></div>
 <div class="toast" id="toast"></div>
 <script src="/client/src/app.js"></script>
 </body>

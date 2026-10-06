@@ -1,6 +1,13 @@
 'use strict';
 const $ = (id) => document.getElementById(id);
-const api = (u, b) => fetch(u, b ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) } : undefined).then((r) => r.json());
+const post = (u, b) => fetch(u, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then((r) => r.json());
+async function api(u, b) {
+  if (!b) return fetch(u).then((r) => r.json());
+  const withAuth = () => (b.wallet && typeof wallet !== 'undefined' && b.wallet === wallet ? Object.assign({}, b, { auth: getAuth() }) : b);
+  let r = await post(u, withAuth());
+  if (r && r.auth) { const ok = await signIn(); if (ok) r = await post(u, withAuth()); }
+  return r;
+}
 const E = (n) => (n == null || !isFinite(n)) ? '—' : (Math.abs(n) >= 100 ? (+n).toFixed(2) : Math.abs(n) >= 1 ? (+n).toFixed(3) : (+n).toFixed(4)) + ' SOL';
 const fmt = (n, d = 2) => (n == null || !isFinite(n)) ? '—' : (+n).toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d });
 const big = (n) => Math.abs(n) >= 1e6 ? fmt(n / 1e6, 2) + 'M' : Math.abs(n) >= 1e3 ? fmt(n / 1e3, 1) + 'K' : fmt(n, 0);
@@ -18,9 +25,23 @@ function b58enc(bytes) { let n = 0n; for (const x of bytes) n = n * 256n + BigIn
 const isSolAddr = (v) => { if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(v)) return false; try { return b58dec(v).length === 32; } catch (e) { return false; } };
 const sol = () => (window.phantom && window.phantom.solana) || window.solana || null;
 function setConnected() { $('connect').textContent = wallet ? wallet.slice(0, 4) + '…' + wallet.slice(-4) : 'Connect'; }
-async function connect() { const p = sol(); if (!p) { $('wmodal').classList.add('on'); return; } try { const r = await p.connect(); const pk = (r && r.publicKey ? r.publicKey : p.publicKey).toString(); if (!isSolAddr(pk)) throw 0; wallet = pk; localStorage.setItem('cerebro_w', wallet); setConnected(); toast('connected · Solana'); await loadAccount(); } catch (e) { toast('connection cancelled', true); } }
+const errText = (e) => { const m = (e && (e.message || (e.error && e.error.message))) || String(e || ''); if ((e && e.code === 4001) || /reject|denied|cancel/i.test(m)) return 'request rejected in your wallet'; return m.slice(0, 120) || 'wallet error'; };
+// signed session: one free message signature proves you own this desk. Nothing that moves SOL works without it.
+const AKEY = () => 'cerebro_auth_' + wallet;
+function getAuth() { try { const x = JSON.parse(localStorage.getItem(AKEY()) || 'null'); return x && x.exp > Date.now() + 6e4 ? x : null; } catch (e) { return null; } }
+async function signIn() {
+  if (!wallet) return false; if (getAuth()) return true; const p = sol();
+  if (!p || !p.signMessage) { toast('connect Phantom to sign in (a pasted address is view-only)', true); return false; }
+  try { const m = await (await fetch('/api/session?wallet=' + wallet)).json(); if (m.error) throw new Error(m.error);
+    toast('sign the message in your wallet to unlock your desk (free, no transaction)');
+    const r = await p.signMessage(new TextEncoder().encode(m.message), 'utf8'); const sig = r && (r.signature || r);
+    localStorage.setItem(AKEY(), JSON.stringify({ exp: m.exp, sig: b58enc(new Uint8Array(sig)) })); return true;
+  } catch (e) { toast(errText(e), true); return false; }
+}
+const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+async function connect() { const p = sol(); if (!p) { $('wmodal').classList.add('on'); return; } try { const r = await p.connect(); const pk = (r && r.publicKey ? r.publicKey : p.publicKey).toString(); if (!isSolAddr(pk)) throw new Error('wallet returned no Solana address'); wallet = pk; localStorage.setItem('cerebro_w', wallet); setConnected(); await signIn(); toast('connected · Solana'); await loadAccount(); } catch (e) { toast(errText(e), true); } }
 (function () { const p = sol(); if (p && p.on) p.on('accountChanged', (pk) => { if (pk) { wallet = pk.toString(); localStorage.setItem('cerebro_w', wallet); setConnected(); loadAccount(); } }); })();
-$('connect').onclick = () => { if (wallet) { wallet = ''; localStorage.removeItem('cerebro_w'); A = null; setConnected(); renderAccount(); try { const p = sol(); if (p && p.disconnect) p.disconnect(); } catch (e) {} toast('disconnected'); } else connect(); };
+$('connect').onclick = () => { if (wallet) { localStorage.removeItem(AKEY()); wallet = ''; localStorage.removeItem('cerebro_w'); A = null; setConnected(); renderAccount(); try { const p = sol(); if (p && p.disconnect) p.disconnect(); } catch (e) {} toast('disconnected'); } else connect(); };
 $('wmodal').onclick = (e) => { if (e.target.id === 'wmodal') $('wmodal').classList.remove('on'); };
 $('wsave').onclick = async () => { const v = $('waddr').value.trim(); if (!isSolAddr(v)) return toast('invalid Solana address', true); wallet = v; localStorage.setItem('cerebro_w', wallet); setConnected(); $('wmodal').classList.remove('on'); await loadAccount(); };
 // build a legacy SystemProgram.transfer message by hand (no SDK): header, 3 keys, blockhash, one instruction

@@ -27,6 +27,19 @@ const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 function base58(buf) { let n = BigInt('0x' + Buffer.from(buf).toString('hex') || '0'), s = ''; while (n > 0n) { s = B58[Number(n % 58n)] + s; n /= 58n; } return s || '1'; }
 const id8 = () => base58(randomBytes(6));
 const isWallet = (s) => /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(s);
+function b58dec(str) { let n = 0n; for (const ch of str) { const i = B58.indexOf(ch); if (i < 0) throw new Error('b58'); n = n * 58n + BigInt(i); } const out = []; while (n > 0n) { out.unshift(Number(n % 256n)); n /= 256n; } for (const ch of str) { if (ch === '1') out.unshift(0); else break; } return Buffer.from(out); }
+const SPKI_ED25519 = Buffer.from('302a300506032b6570032100', 'hex');
+const SESSIONS = new Map();
+const sessionMsg = (w, exp) => ['CEREBRO desk session', 'Wallet: ' + w, 'Expires: ' + exp, 'Signing is free and moves no funds.'].join('\n');
+function requireSess(w, auth) {
+  if (!auth || !auth.sig || !auth.exp) throw 'sign in with your wallet first';
+  const exp = +auth.exp; if (!(exp > Date.now())) throw 'session expired, sign in again'; if (exp > Date.now() + 8 * 864e5) throw 'bad session';
+  const key = w + ':' + exp + ':' + auth.sig; if (SESSIONS.get(key)) return true;
+  let ok = false; try { const pk = b58dec(w); const sig = b58dec(auth.sig); if (pk.length !== 32 || sig.length !== 64) throw 0;
+    ok = require('crypto').verify(null, Buffer.from(sessionMsg(w, exp), 'utf8'), require('crypto').createPublicKey({ key: Buffer.concat([SPKI_ED25519, pk]), format: 'der', type: 'spki' }), sig); } catch (e) { throw 'bad signature'; }
+  if (!ok) throw 'signature is not from this wallet';
+  if (SESSIONS.size > 5000) SESSIONS.clear(); SESSIONS.set(key, 1); return true;
+}
 const num = (v, max) => { const x = Math.floor((+v || 0) * 1e9) / 1e9; return x > 0 ? Math.min(x, max == null ? x : max) : 0; };
 
 // ---------- state (all balances in SOL) ----------
@@ -164,12 +177,14 @@ function body(req) { return new Promise((r) => { let b = ''; req.on('data', (c) 
 
 http.createServer(async (req, res) => {
   const u = req.url.split('?')[0];
+  if (req.method === 'GET' && u === '/api/session') { const w = new URL(req.url, 'http://x').searchParams.get('wallet') || ''; if (!isWallet(w)) return json(res, 200, { error: 'bad wallet' }); const exp = Date.now() + 7 * 864e5; return json(res, 200, { exp, message: sessionMsg(w, exp) }); }
   if (req.method === 'GET') { if (u === '/api/state') return json(res, 200, state()); const m = /^\/api\/coin\/([A-Za-z0-9]+)$/.exec(u); if (m) { const c = db.coins[m[1]]; return c ? json(res, 200, coinView(c, true)) : json(res, 404, { error: 'no such coin' }); } return serve(req, res); }
   if (req.method !== 'POST') { res.writeHead(405); return res.end(); }
   const d = await body(req);
   if (u === '/api/coin') { const c = db.coins[d.id]; return c ? json(res, 200, coinView(c, true)) : json(res, 200, { error: 'no such coin' }); }
   if (!isWallet(d.wallet || '')) return json(res, 200, { error: 'connect a Solana wallet' });
   const addr = d.wallet; const w = W(addr);
+  if (['/api/launch', '/api/buy', '/api/sell', '/api/withdraw'].includes(u)) { try { requireSess(addr, d.auth); } catch (e) { return json(res, 200, { error: String(e), auth: true }); } }
   if (u === '/api/account') return json(res, 200, account(addr));
   if (u === '/api/deposit/intent') { try { return json(res, 200, await depositIntent()); } catch (e) { return json(res, 200, { error: String(e.message || e) }); } }
   if (u === '/api/deposit') { try { const r = await creditDeposit(addr, d.tx); return json(res, 200, { ok: true, ...r, ...account(addr) }); } catch (e) { return json(res, 200, { error: String(e.message || e) }); } }

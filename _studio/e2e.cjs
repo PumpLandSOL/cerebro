@@ -1,6 +1,11 @@
 // CEREBRO E2E (dev server, DEV_FAUCET=1, fresh DATA_PATH): launch, curve buy/sell, fees to agent, agent trades on tape, buyback, withdraw queue.
-const B = 'http://localhost:' + (process.env.PORT || 8224); const A = 'A1111111111111111111111111111111111111111c1', C = 'C2222222222222222222222222222222222222222c2';
-const post = (u, w, b) => fetch(B + u, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ wallet: w, ...b }) }).then((r) => r.json());
+const B = 'http://localhost:' + (process.env.PORT || 8224); const crypto = require('crypto');
+const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'; const b58 = (buf) => { let n = BigInt('0x' + Buffer.from(buf).toString('hex')), s = ''; while (n > 0n) { s = B58[Number(n % 58n)] + s; n /= 58n; } for (const x of buf) { if (x === 0) s = '1' + s; else break; } return s; };
+const mkW = () => { const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519'); return { addr: b58(publicKey.export({ format: 'der', type: 'spki' }).subarray(12)), key: privateKey }; };
+const KA = mkW(), KC = mkW(), KX = mkW(); const A = KA.addr, C = KC.addr; const KEYS = { [A]: KA.key, [C]: KC.key }; const AUTH = {};
+async function auth(w, key) { if (AUTH[w]) return AUTH[w]; const m = await (await fetch(B + '/api/session?wallet=' + w)).json(); return (AUTH[w] = { exp: m.exp, sig: b58(crypto.sign(null, Buffer.from(m.message, 'utf8'), key || KEYS[w])) }); }
+const post = async (u, w, b) => fetch(B + u, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ wallet: w, ...b, ...(w && KEYS[w] ? { auth: await auth(w) } : {}) }) }).then((r) => r.json());
+const raw = (u, b) => fetch(B + u, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(b) }).then((r) => r.json());
 let fails = 0; const ok = (n, c, x) => { console.log((c ? 'PASS ' : 'FAIL ') + n + (x ? '  · ' + x : '')); if (!c) fails++; };
 const near = (a, b, e = 1e-6) => Math.abs(a - b) < e; const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 (async () => {
@@ -8,6 +13,8 @@ const near = (a, b, e = 1e-6) => Math.abs(a - b) < e; const sleep = (ms) => new 
   const s0 = await (await fetch(B + '/api/state')).json(); ok('tape live', s0.tape.some((t) => t.fresh), s0.tape.filter((t) => t.fresh).map((t) => t.sym).join(','));
   ok('six brains', s0.brains.length === 6);
   await post('/api/dev/faucet', A, { amount: 10 }); await post('/api/dev/faucet', C, { amount: 4 });
+  const un = await raw('/api/launch', { wallet: A, name: 'Thief', ticker: 'THF', brain: 'DEGEN', seed: 1 }); ok('unsigned launch refused', un.auth === true && !un.ok, un.error);
+  const m = await (await fetch(B + '/api/session?wallet=' + A)).json(); const forged = await raw('/api/withdraw', { wallet: A, amount: 1, auth: { exp: m.exp, sig: b58(crypto.sign(null, Buffer.from(m.message), KX.key)) } }); ok('signature from another wallet refused', /not from this wallet/.test(forged.error || ''), forged.error);
   const bad = await post('/api/launch', A, { name: 'x', ticker: 'AB', brain: 'MOMENTUM', seed: 2 }); ok('name too short rejected', !!bad.error);
   const bad2 = await post('/api/launch', A, { name: 'Brainy', ticker: 'BRN', brain: 'MOMENTUM', seed: 0.05 }); ok('seed below minimum rejected', /minimum/.test(bad2.error || ''));
   const L = await post('/api/launch', A, { name: 'Brainy', ticker: 'BRN', brain: 'MOMENTUM', seed: 2 });
