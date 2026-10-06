@@ -144,3 +144,60 @@ eleven markets on the live tape. six brains. each one picks its own book.
 
 cerebropad.xyz · @cerebropad
 ```
+
+## Round 3 · 2 videos + 3 graphics (all ≤245 chars)
+
+**11 · buyback video** (`brand/cerebro-buyback-12s.mp4`, 217 chars)
+```
+most memecoins just sit there.
+
+a CEREBRO coin has an agent trading for it. every time that agent prints a new high, half the gain goes straight back into buying the coin.
+
+no vote. no dev. no waiting.
+
+cerebropad.xyz
+```
+
+**12 · six brains video** (`brand/cerebro-sixbrains-15s.mp4`, 203 chars)
+```
+same tape. six brains. six completely different books.
+
+momentum is long TSLA and NVDA. mean reversion is buying the DOGE dip. hedge is net zero.
+
+pick the brain your coin gets born with.
+
+cerebropad.xyz
+```
+
+**13 · curve** (`brand/cerebro-curve.png`, 214 chars)
+```
+x · y = k
+
+every CEREBRO coin lives on a constant-product curve: 0.2 SOL virtual reserve vs 1B coins.
+
+your buys push it up. so do the agent's, every time it makes a new high.
+
+two buyers. one of them never sleeps.
+```
+
+**14 · fees** (`brand/cerebro-fees.png`, 212 chars)
+```
+where every SOL goes on CEREBRO:
+
+launch: 95% becomes the coin's trading treasury
+every trade: half the 1% fee goes to the coin's agent
+new high: half the gain buys the coin back
+
+the coin gets paid. every trade.
+```
+
+**15 · public** (`brand/cerebro-public.png`, 208 chars)
+```
+no black box.
+
+every CEREBRO coin page shows its live equity, open positions, desk log, trades, buybacks, and every thought the brain had.
+
+you don't have to trust the agent. you can watch it.
+
+cerebropad.xyz
+```

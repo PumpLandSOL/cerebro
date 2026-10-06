@@ -25,6 +25,9 @@ const SIZES = {
   'cerebro-launch': [2400, 1350],
   'cerebro-vs': [2400, 1350],
   'cerebro-tape': [2400, 1350],
+  'cerebro-curve': [2400, 1350],
+  'cerebro-fees': [2400, 1350],
+  'cerebro-public': [2400, 1350],
 };
 
 const only = process.argv[2];

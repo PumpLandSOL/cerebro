@@ -1,0 +1,31 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="_base.css"><script src="books.js"></script>
+<style>body{width:1280px;height:720px}.c{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.tk{position:absolute;left:0;top:300px;white-space:nowrap;font-family:Michroma;font-size:54px;letter-spacing:.06em;color:#f1eefa}
+.card{position:absolute;left:90px;right:90px;height:262px;padding:24px 34px;background:#0c0a14ee;box-shadow:inset 0 0 0 1px #2e2646;clip-path:polygon(22px 0,100% 0,100% calc(100% - 22px),calc(100% - 22px) 100%,0 100%,0 22px)}
+.card .b{font-family:Michroma;font-size:26px;letter-spacing:.14em;display:flex;align-items:center;gap:14px}.card .b i{width:16px;height:16px;border-radius:50%}
+.chips{display:flex;gap:8px;margin-top:14px;flex-wrap:nowrap}.chip{font-family:Michroma;font-size:16px;padding:7px 12px;border-radius:8px}
+.chip.l{background:#14f19522;color:#14f195;box-shadow:inset 0 0 0 1px #14f19566}.chip.s{background:#ff6b8a22;color:#ff6b8a;box-shadow:inset 0 0 0 1px #ff6b8a66}
+.th{font-family:ui-monospace,Consolas,monospace;font-size:20px;color:#b3aac9;margin-top:16px;line-height:1.4}
+</style><body><div class="amb" id="amb"></div><div class="scan"></div>
+<div id="s1" style="position:absolute;inset:0"><div class="tk" id="tk">SOL · BTC · ETH · DOGE · TSLA · NVDA · AAPL · SPY · COIN · MSTR · GLD · SOL · BTC · ETH · DOGE · TSLA · NVDA · AAPL · SPY · COIN · MSTR · GLD</div><div class="mi" style="position:absolute;left:0;right:0;top:170px;text-align:center;font-size:44px">Same tape.</div></div>
+<div class="c" id="s2"><div><div style="display:flex;gap:26px;justify-content:center" id="dots"></div><div class="mi" style="font-size:56px;margin-top:36px">Six brains.</div></div></div>
+<div id="s3" style="position:absolute;inset:0"><div class="mi" style="position:absolute;left:90px;top:36px;font-size:22px;color:#776e8f;letter-spacing:.24em">WHAT EACH ONE HOLDS RIGHT NOW</div><div id="cards"></div></div>
+<div class="c" id="s4"><div><div class="mi" style="font-size:56px;line-height:1.3">Six different trades.<br><span class="iri">Pick your brain.</span></div></div></div>
+<div class="c" id="s5"><div><div class="mi" style="font-size:66px;letter-spacing:.3em">CEREBRO</div><div class="mi" style="font-size:24px;margin-top:22px">Memecoins <span class="iri">with a brain.</span></div><div style="font-size:22px;letter-spacing:.2em;color:#b3aac9;margin-top:22px">cerebropad.xyz · @cerebropad</div></div></div>
+<div style="position:absolute;right:22px;bottom:14px;font-size:13px;color:#776e8f;letter-spacing:.06em" id="src">real books and thoughts, captured from the six brains on the live tape</div>
+<script>
+const $=(i)=>document.getElementById(i),cl=(x)=>Math.max(0,Math.min(1,x)),e=(x)=>1-Math.pow(1-cl(x),3),win=(t,a,b,f=.25)=>cl((t-a)/f)*cl((b-t)/f);
+const COL={MOMENTUM:'#14f195',REVERSION:'#9945ff',TREND:'#c7b3ff',DEGEN:'#ffb36b',HEDGE:'#ffe27b',VOLHUNT:'#5ad8ff'};
+const B=window.BOOKS;$('dots').innerHTML=B.map(b=>`<i style="width:44px;height:44px;border-radius:50%;background:${COL[b.brain]};box-shadow:0 0 30px ${COL[b.brain]};display:inline-block"></i>`).join('');
+$('cards').innerHTML=B.map((b,i)=>`<div class="card" id="cd${i}" style="top:${i%2?380:96}px"><div class="b" style="color:${COL[b.brain]}"><i style="background:${COL[b.brain]};box-shadow:0 0 12px ${COL[b.brain]}"></i>${b.name.toUpperCase()}</div><div class="chips">${b.pos.map(p=>`<span class="chip ${p[0]==='+'?'l':'s'}">${p[0]==='+'?'LONG':'SHORT'} ${p.slice(1)}</span>`).join('')}</div><div class="th">“${b.thought}”</div></div>`).join('');
+const T3=4,SLOT=2.55;
+window.__seek=(t)=>{
+  $('amb').style.transform=`rotate(${t*3}deg) scale(${1+t*.015})`;
+  $('s1').style.opacity=win(t,0,2.4);$('tk').style.transform=`translateX(${-t*260}px)`;
+  $('s2').style.opacity=win(t,2.4,4);[...$('dots').children].forEach((d,i)=>{d.style.transform=`scale(${e((t-2.5-i*.1)/.3)})`;});
+  $('s3').style.opacity=win(t,T3,T3+3*SLOT);
+  B.forEach((b,i)=>{const pair=Math.floor(i/2),a=T3+pair*SLOT+(i%2)*.25;const p=win(t,a,T3+(pair+1)*SLOT,.3);const el=$('cd'+i);el.style.opacity=p;el.style.transform=`translateX(${(1-e((t-a)/.4))*60}px)`;});
+  $('s4').style.opacity=win(t,T3+3*SLOT,13);$('s5').style.opacity=e((t-13)/.4);
+  $('src').style.opacity=(t>T3&&t<T3+3*SLOT)?1:0;
+};window.__seek(0);
+</script>

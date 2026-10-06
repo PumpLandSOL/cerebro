@@ -1,0 +1,37 @@
+<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="_base.css">
+<style>body{width:1280px;height:720px}.c{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.lbl{position:absolute;font-family:Michroma;font-size:13px;letter-spacing:.24em;color:#776e8f}
+.flash{position:absolute;white-space:nowrap;font-family:Michroma;font-size:20px;letter-spacing:.14em;color:#14f195;text-shadow:0 0 18px #14f195}
+</style><body><div class="amb" id="amb"></div><div class="scan"></div>
+<div class="c" id="s1"><div><svg width="720" height="200" viewBox="0 0 720 200"><path id="flat" d="M0 100 L720 100" stroke="#5a5470" stroke-width="5" fill="none" stroke-dasharray="720" stroke-dashoffset="720"/></svg><div class="mi" style="font-size:40px;margin-top:20px">Most memecoins<br><span style="color:#776e8f">just sit there.</span></div></div></div>
+<div class="c" id="s2"><div><svg viewBox="0 0 40 40" style="width:150px" id="mk"><defs><linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="#14f195"/><stop offset="1" stop-color="#dc1fff"/></linearGradient></defs><circle cx="20" cy="20" r="18" fill="none" stroke="url(#lg)" stroke-width="3"/><circle cx="20" cy="20" r="9" fill="url(#lg)"/><path d="M20 2v6M20 32v6M2 20h6M32 20h6" stroke="#f1eefa" stroke-width="2" stroke-linecap="round"/></svg><div class="mi" style="font-size:52px;margin-top:26px">This one has <span class="iri">a brain.</span></div></div></div>
+<div id="s3" style="position:absolute;inset:0">
+ <div class="lbl" style="left:90px;top:58px">THE AGENT · TRADING EQUITY</div><div class="lbl" style="left:90px;top:392px">THE COIN · PRICE ON ITS CURVE</div>
+ <svg style="position:absolute;left:90px;top:80px" width="1100" height="270" viewBox="0 0 1100 270"><path id="hwm" d="" stroke="#776e8f" stroke-width="2" stroke-dasharray="8 8" fill="none"/><path id="eq" d="" stroke="#14f195" stroke-width="5" fill="none" style="filter:drop-shadow(0 0 8px #14f195)"/></svg>
+ <svg style="position:absolute;left:90px;top:414px" width="1100" height="230" viewBox="0 0 1100 230"><path id="px" d="" stroke="#dc1fff" stroke-width="5" fill="none" style="filter:drop-shadow(0 0 8px #dc1fff)"/></svg>
+ <div class="flash" id="f0"></div><div class="flash" id="f1"></div><div class="flash" id="f2"></div>
+ <svg style="position:absolute;inset:0;pointer-events:none" width="1280" height="720"><g id="drops"></g></svg>
+</div>
+<div class="c" id="s4"><div><div class="mi" style="font-size:50px;line-height:1.35">Every new high,<br><span class="iri">half buys the coin back.</span></div><div style="font-size:24px;color:#b3aac9;margin-top:24px">automatically · on its own curve · logged in public</div></div></div>
+<div class="c" id="s5"><div><div class="mi" style="font-size:66px;letter-spacing:.3em">CEREBRO</div><div class="mi" style="font-size:24px;margin-top:22px">Memecoins <span class="iri">with a brain.</span></div><div style="font-size:22px;letter-spacing:.2em;color:#b3aac9;margin-top:22px">cerebropad.xyz · @cerebropad</div></div></div>
+<script>
+const $=(i)=>document.getElementById(i),cl=(x)=>Math.max(0,Math.min(1,x)),e=(x)=>1-Math.pow(1-cl(x),3),win=(t,a,b,f=.25)=>cl((t-a)/f)*cl((b-t)/f);
+// equity: wiggles, then breaks to three new highs (an explainer path, not market data)
+const N=220,EQ=[];let v=200;for(let i=0;i<N;i++){const k=i/N;v=210-Math.sin(i/9)*12-Math.sin(i/23)*8-(k>.22?(k-.22)*70:0)-(k>.5?(k-.5)*80:0)-(k>.75?(k-.75)*110:0);EQ.push(v);}
+const HI=[Math.round(N*.3),Math.round(N*.58),Math.round(N*.86)];
+const T0=4.4,T1=8.6,X=(i)=>i/(N-1)*1100;
+window.__seek=(t)=>{
+  $('amb').style.transform=`rotate(${t*3}deg) scale(${1+t*.015})`;
+  $('s1').style.opacity=win(t,0,2.2);$('flat').style.strokeDashoffset=720*(1-e((t-.2)/1.2));
+  $('s2').style.opacity=win(t,2.2,4.4);$('mk').style.transform=`scale(${.8+.2*e((t-2.2)/.5)}) rotate(${(t-2.2)*30}deg)`;
+  $('s3').style.opacity=win(t,T0,T1);
+  const n=Math.max(2,Math.floor(cl((t-T0-.2)/3.6)*N));let d='',hw='',best=1e9,steps=0;
+  for(let i=0;i<n;i++){d+=(i?'L':'M')+X(i).toFixed(1)+' '+EQ[i].toFixed(1);}
+  let h=EQ[0],hwd='M0 '+h;for(let i=1;i<n;i++){if(EQ[i]<h){h=EQ[i];}hwd+=' L'+X(i).toFixed(1)+' '+h.toFixed(1);}
+  $('eq').setAttribute('d',d);$('hwm').setAttribute('d',hwd);
+  let pd='M0 200';let py=200;const hit=HI.filter(i=>i<n).length;for(let i=1;i<n;i++){if(HI.includes(i))py-=50;pd+=' L'+X(i).toFixed(1)+' '+py;}$('px').setAttribute('d',pd);
+  HI.forEach((i,k)=>{const f=$('f'+k);const when=T0+.2+i/N*3.6;const p=cl((t-when)/.25)*cl((when+1.1-t)/.3);f.style.opacity=p;f.textContent='NEW HIGH → 50% BUYBACK';f.style.left=Math.min(1280-540,90+X(i)-120)+'px';f.style.top=(80+EQ[i]-46)+'px';});
+  const g=$('drops');g.innerHTML='';HI.forEach((i)=>{const when=T0+.2+i/N*3.6;const p=cl((t-when)/.6);if(p>0&&p<1){const x=90+X(i),y1=80+EQ[i],y2=414+200-50*(HI.indexOf(i)+1);const yy=y1+(y2-y1)*e(p);g.innerHTML+=`<circle cx="${x}" cy="${yy}" r="9" fill="#14f195" style="filter:drop-shadow(0 0 10px #14f195)"/>`;}});
+  $('s4').style.opacity=win(t,T1,10.6);$('s5').style.opacity=e((t-10.6)/.4);
+};window.__seek(0);
+</script>
